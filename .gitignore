@@ -8,3 +8,7 @@ build/
 dist/
 .pytest_cache/
 data/processed/
+*.db
+*.db-journal
+*.db-wal
+*.db-shm
