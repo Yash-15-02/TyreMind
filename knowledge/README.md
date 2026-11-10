@@ -1,6 +1,6 @@
 # TyreMind technical reference collection
 
-Three manufacturer PDFs are enabled. FMCSA is disabled at the user's request after HTTP 403; its catalog entry remains for provenance. `sources.json` records titles, publishers, editions, regions, URLs, topics and section hints. Source-preserving chunking and local embeddings are implemented; ChromaDB and agent retrieval are later steps. See [chunking instructions](../docs/chunking.md).
+Three manufacturer PDFs are enabled. FMCSA is disabled at the user's request after HTTP 403; its catalog entry remains for provenance. `sources.json` records titles, publishers, editions, regions, URLs, topics and section hints. Source-preserving chunking, embeddings and persistent local ChromaDB storage are implemented; agent retrieval is a later step. See [chunking instructions](../docs/chunking.md).
 
 | Source | Intended role |
 |---|---|
