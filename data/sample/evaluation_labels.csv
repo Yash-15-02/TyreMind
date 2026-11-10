@@ -1,0 +1,13 @@
+tyre_id,timestamp,scenario_label,scenario_active,overload_active,simulated_true_tread_depth_mm
+TYR-0001,2026-01-01T00:00:00+00:00,normal,False,False,14.4198
+TYR-0001,2026-01-02T00:00:00+00:00,normal,False,False,14.4019
+TYR-0001,2026-01-03T00:00:00+00:00,normal,False,False,14.377
+TYR-0001,2026-01-04T00:00:00+00:00,normal,False,False,14.351
+TYR-0001,2026-01-05T00:00:00+00:00,normal,False,False,14.3365
+TYR-0001,2026-01-06T00:00:00+00:00,normal,False,False,14.3198
+TYR-0001,2026-01-07T00:00:00+00:00,normal,False,False,14.2973
+TYR-0001,2026-01-08T00:00:00+00:00,normal,False,False,14.2758
+TYR-0001,2026-01-09T00:00:00+00:00,normal,False,False,14.2532
+TYR-0001,2026-01-10T00:00:00+00:00,normal,False,False,14.2342
+TYR-0001,2026-01-11T00:00:00+00:00,normal,False,False,14.2103
+TYR-0001,2026-01-12T00:00:00+00:00,normal,False,False,14.1865
