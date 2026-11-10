@@ -147,7 +147,7 @@ Results are in `data/splits/`: `train.csv`, `validation_seen.csv`, `validation_u
 
 ## Collect technical documents for RAG
 
-Four official reference PDFs have been selected and download-verified. To collect them locally:
+Three manufacturer reference PDFs are enabled and download-verified; FMCSA is disabled at the user's request. To collect them locally:
 
 ```bash
 git pull
@@ -156,4 +156,15 @@ python -m tyremind.rag.collect
 python -m unittest discover -s tests -v
 ```
 
-Expected collection summary: `Downloaded 4; failed 0.` Output: `data/knowledge/raw/` with PDFs and a collection manifest. The source catalog and usage notes are in [knowledge/README.md](knowledge/README.md) and [knowledge/sources.json](knowledge/sources.json). Publisher originals are not committed to Git. No embeddings or ChromaDB index are built yet. The complete test suite now has 29 tests.
+Expected collection summary: `Downloaded 3; failed 0.` Output: `data/knowledge/raw/` with PDFs and a collection manifest. The source catalog and usage notes are in [knowledge/README.md](knowledge/README.md) and [knowledge/sources.json](knowledge/sources.json). Publisher originals are not committed to Git. No embeddings or ChromaDB index are built yet. The complete test suite now has 33 tests.
+
+## Split technical text and preserve source references
+
+```bash
+git pull
+python -m pip install -e .
+python -m tyremind.rag.chunk
+python -m unittest discover -s tests -v
+```
+
+Requires the three manufacturer PDFs downloaded earlier. Output: `data/knowledge/processed/pages.jsonl`, `chunks.jsonl` and `chunk_report.json`. The default run extracts 224 pages and produces 82 selected passages. Each passage preserves its title, publisher, edition, URL, PDF page, section, file checksum and text offsets. Full source text remains local, outside Git. FMCSA is skipped; unverified inflation tables stay outside retrieval chunks. Read [the chunking guide](docs/chunking.md) for page selection and limitations. No embeddings or vector index exist yet.
