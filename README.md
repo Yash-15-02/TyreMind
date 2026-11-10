@@ -200,4 +200,15 @@ python -m tyremind.ml.train
 python -m unittest discover -s tests -v
 ```
 
-This compares three configurations per model with three purged time/group folds, then saves both fitted wear-prediction pipelines and metrics in `models/wear/`. No final-test data is used for selection. Real measured results: XGBoost CV MAE 0.1999 mm; Random Forest 0.2056 mm; the simpler wear-rate baseline performs better at 0.1826 mm. These are synthetic-data results. Read [training details](docs/wear_training.md) and [measured comparison](docs/wear_model_results.md). The full suite has 48 tests with ML and RAG dependencies installed. Isolation Forest remains untrained.
+This compares three configurations per model with three purged time/group folds, then saves both fitted wear-prediction pipelines and metrics in `models/wear/`. No final-test data is used for selection. Real measured results: XGBoost CV MAE 0.1999 mm; Random Forest 0.2056 mm; the simpler wear-rate baseline performs better at 0.1826 mm. These are synthetic-data results. Read [training details](docs/wear_training.md) and [measured comparison](docs/wear_model_results.md). The full suite has 48 tests with ML and RAG dependencies installed. Isolation Forest is implemented in the anomaly-detection section below.
+
+## Train Isolation Forest anomaly detection
+
+```powershell
+git pull
+python -m pip install -e ".[ml]"
+python -m tyremind.ml.anomaly
+python -m unittest discover -s tests -v
+```
+
+The model fits seven operating/wear features on normal-reference history, calibrates its threshold using validation data only, and reports precision/recall/F1/F2, false-alert rates and held-out-truck performance. Saved pipeline and reports are in `models/anomaly/`. All 55 tests pass with optional dependencies installed. **Measured held-out recall is only 7.72% at the selected threshold; this experimental model must not be the sole alert gate.** See [design, commands and measured results](docs/isolation_forest.md). This does not mark worn-out tyres or implement the scheduled risk engine.
