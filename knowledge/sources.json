@@ -1,0 +1,98 @@
+{
+  "catalog_version": "1.0",
+  "reviewed_on": "2026-11-10",
+  "sources": [
+    {
+      "id": "michelin_service_2023",
+      "title": "MICHELIN Truck Tire Service Manual (2023)",
+      "publisher": "Michelin North America",
+      "filename": "michelin_truck_tire_service_manual_2023.pdf",
+      "url": "https://cxf-prod.azureedge.net/b2b-experience-production/attachments/clpsedg9902mq01l0d38bnj6r-michelin-truck-tire-service-manual-2023.pdf",
+      "landing_url": "https://business.michelinman.com/tips-advice/resources",
+      "edition": "2023 (filename)",
+      "region": "North America",
+      "topics": [
+        "pressure measurement",
+        "underinflation",
+        "temperature and pressure",
+        "tread inspection",
+        "irregular wear",
+        "alignment",
+        "tyre damage"
+      ],
+      "section_hints": [
+        "Extending Tire Life",
+        "Maintaining the Tire",
+        "Maintaining the Vehicle",
+        "Tire Damage"
+      ],
+      "priority": 1,
+      "notes": "Primary manufacturer reference. Select relevant maintenance and inspection sections during chunking; do not automatically index mounting/repair procedures."
+    },
+    {
+      "id": "michelin_inflation_2025",
+      "title": "MICHELIN Load and Inflation Table Standard",
+      "publisher": "Michelin",
+      "filename": "michelin_load_inflation_april_2025.pdf",
+      "url": "https://cxf-prod.azureedge.net/b2b-experience-production/attachments/cm91ug831002501m3ndy6bncd-inflation-chart-e-april2025.pdf",
+      "landing_url": "https://business.michelinman.com/tips-advice/resources",
+      "edition": "April 2025 (filename)",
+      "region": "North America",
+      "topics": [
+        "load and inflation",
+        "tyre sizes",
+        "single and dual fitments"
+      ],
+      "section_hints": [
+        "Load and Inflation"
+      ],
+      "priority": 2,
+      "notes": "Tabular supplement. Table parsing must be visually verified before indexing numerical recommendations; not a source for a universal pressure threshold."
+    },
+    {
+      "id": "bridgestone_truck_safety",
+      "title": "Bridgestone Truck Tire Limited Warranty & Safety Manual",
+      "publisher": "Bridgestone Americas Tire Operations",
+      "filename": "bridgestone_truck_tire_safety_manual.pdf",
+      "url": "https://commercial.bridgestone.com/content/dam/bcs-sites/bridgestone-commercial/images/warranty/bridgestone-us-englishtbr-limited-warranty-and-safety-manual-v2.pdf",
+      "landing_url": "https://commercial.bridgestone.com/content/dam/bcs-sites/bridgestone-commercial/images/warranty/bridgestone-us-englishtbr-limited-warranty-and-safety-manual-v2.pdf",
+      "edition": "v2 (URL); exact publication date not confirmed",
+      "region": "United States",
+      "topics": [
+        "inflation",
+        "inspection",
+        "loading",
+        "irregular wear",
+        "maintenance"
+      ],
+      "section_hints": [
+        "Safety",
+        "Inflation",
+        "Inspection"
+      ],
+      "priority": 2,
+      "notes": "Secondary manufacturer source. Exclude warranty administration from the maintenance corpus. Product-specific instructions must not be attributed to Michelin."
+    },
+    {
+      "id": "fmcsa_tire_advisory_2016",
+      "title": "USDOT Tire Advisory Card \u2014 Commercial Tire Safety Tips",
+      "publisher": "Federal Motor Carrier Safety Administration, U.S. DOT",
+      "filename": "fmcsa_commercial_tire_advisory_2016.pdf",
+      "url": "https://www.fmcsa.dot.gov/sites/fmcsa.dot.gov/files/docs/USDOT_1168_1097_TireAdvisory_508.pdf",
+      "landing_url": "https://www.fmcsa.dot.gov/sites/fmcsa.dot.gov/files/docs/USDOT_1168_1097_TireAdvisory_508.pdf",
+      "edition": "June 2016, FMCSA-ADO-16-003",
+      "region": "United States",
+      "topics": [
+        "daily visual inspection",
+        "cold inflation checks",
+        "overloading",
+        "heat buildup"
+      ],
+      "section_hints": [
+        "Commercial Tire Safety Tips"
+      ],
+      "priority": 1,
+      "notes": "Concise inspection reference, not a current regulatory code or India-specific compliance standard."
+    }
+  ]
+}
