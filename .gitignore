@@ -16,3 +16,4 @@ data/features/
 data/splits/
 data/knowledge/
 models/wear/
+models/anomaly/
