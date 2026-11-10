@@ -27,7 +27,44 @@
         "Tire Damage"
       ],
       "priority": 1,
-      "notes": "Primary manufacturer reference. Select relevant maintenance and inspection sections during chunking; do not automatically index mounting/repair procedures."
+      "notes": "Primary manufacturer reference. Select relevant maintenance and inspection sections during chunking; do not automatically index mounting/repair procedures.",
+      "enabled": true,
+      "verified_sha256": "1de2a4b808a4cfbed37e434b8abf0a44153c831dd76a7a38b06155456f0ee9cb",
+      "expected_pages": 194,
+      "chunk_sections": [
+        {
+          "pdf_pages": [
+            55,
+            57
+          ],
+          "section": "Maintaining the Tire \u2014 pressure",
+          "printed_page_offset": -5
+        },
+        {
+          "pdf_pages": [
+            59,
+            63
+          ],
+          "section": "Maintaining the Tire \u2014 inspection and monitoring",
+          "printed_page_offset": -5
+        },
+        {
+          "pdf_pages": [
+            69,
+            80
+          ],
+          "section": "Maintaining the Vehicle \u2014 alignment and wear",
+          "printed_page_offset": -5
+        },
+        {
+          "pdf_pages": [
+            85,
+            86
+          ],
+          "section": "Maintaining the Vehicle \u2014 braking and heat",
+          "printed_page_offset": -5
+        }
+      ]
     },
     {
       "id": "michelin_inflation_2025",
@@ -47,7 +84,12 @@
         "Load and Inflation"
       ],
       "priority": 2,
-      "notes": "Tabular supplement. Table parsing must be visually verified before indexing numerical recommendations; not a source for a universal pressure threshold."
+      "notes": "Tabular supplement. Table parsing must be visually verified before indexing numerical recommendations; not a source for a universal pressure threshold.",
+      "enabled": true,
+      "verified_sha256": "865e25a27be4109686b80e2ef2ff8a4bf1d4fed5781b24ebf87d5e965b8e6944",
+      "expected_pages": 20,
+      "chunk_sections": [],
+      "chunk_exclusion_reason": "Numerical tables require visual layout verification before retrieval."
     },
     {
       "id": "bridgestone_truck_safety",
@@ -71,7 +113,19 @@
         "Inspection"
       ],
       "priority": 2,
-      "notes": "Secondary manufacturer source. Exclude warranty administration from the maintenance corpus. Product-specific instructions must not be attributed to Michelin."
+      "notes": "Secondary manufacturer source. Exclude warranty administration from the maintenance corpus. Product-specific instructions must not be attributed to Michelin.",
+      "enabled": true,
+      "verified_sha256": "0cabe04a3776f0b1cfa2c630c12e0f5562fadb392f831fa15aa98f2ec7ee248c",
+      "expected_pages": 10,
+      "chunk_sections": [
+        {
+          "pdf_pages": [
+            6,
+            7
+          ],
+          "section": "Inflation, loading, damage and inspection"
+        }
+      ]
     },
     {
       "id": "fmcsa_tire_advisory_2016",
@@ -92,7 +146,8 @@
         "Commercial Tire Safety Tips"
       ],
       "priority": 1,
-      "notes": "Concise inspection reference, not a current regulatory code or India-specific compliance standard."
+      "notes": "Concise inspection reference, not a current regulatory code or India-specific compliance standard. Excluded at user request after HTTP 403.",
+      "enabled": false
     }
   ]
 }
