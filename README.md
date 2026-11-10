@@ -1,6 +1,6 @@
 # TyreMind AI
 
-Automated tyre monitoring proof of concept. **Implemented: Phase 1, Steps 1–5 — historical generation, preprocessing, SQLite storage, features and training/evaluation splits.** ML, agents and the dashboard are future steps.
+Automated tyre monitoring proof of concept. **Implemented: Phase 1, Steps 1–5 — historical generation, preprocessing, SQLite storage, features and training/evaluation splits.** Wear-model comparison is implemented below; agents and the dashboard are future steps.
 
 ## Run
 
@@ -190,3 +190,14 @@ python -m unittest discover -s tests -v
 ```
 
 No ChromaDB account/API key is needed. The importer reuses your existing embeddings and saves 82 passage/vector/source records in `data/knowledge/chroma/`. Rerunning the same import adds zero duplicates. `active_index.json` identifies the current verified collection. All 42 tests pass with the optional dependencies installed. See [ChromaDB instructions](docs/chromadb.md). General retrieval and agent tools remain later work.
+
+## Train and compare Random Forest and XGBoost
+
+```powershell
+git pull
+python -m pip install -e ".[ml]"
+python -m tyremind.ml.train
+python -m unittest discover -s tests -v
+```
+
+This compares three configurations per model with three purged time/group folds, then saves both fitted wear-prediction pipelines and metrics in `models/wear/`. No final-test data is used for selection. Real measured results: XGBoost CV MAE 0.1999 mm; Random Forest 0.2056 mm; the simpler wear-rate baseline performs better at 0.1826 mm. These are synthetic-data results. Read [training details](docs/wear_training.md) and [measured comparison](docs/wear_model_results.md). The full suite has 48 tests with ML and RAG dependencies installed. Isolation Forest remains untrained.
