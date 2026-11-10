@@ -14,3 +14,4 @@ data/processed/
 *.db-shm
 data/features/
 data/splits/
+data/knowledge/
