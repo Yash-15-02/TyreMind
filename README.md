@@ -1,6 +1,6 @@
 # TyreMind AI
 
-Automated tyre monitoring proof of concept. **Implemented: Phase 1, Steps 1–4 — historical generation, Pandas preprocessing, SQLite storage and feature engineering.** ML, agents and the dashboard are future steps.
+Automated tyre monitoring proof of concept. **Implemented: Phase 1, Steps 1–5 — historical generation, preprocessing, SQLite storage, features and training/evaluation splits.** ML, agents and the dashboard are future steps.
 
 ## Run
 
@@ -129,3 +129,18 @@ python -m unittest discover -s tests -v
 Requires the Step 3 database. If starting fresh, run generation, preprocessing and database loading first. Step 4 opens the database read-only and exports `data/features/tyre_features.csv` plus `data/features/feature_report.json`. Default output: 21,600 rows, 120 tyres and 19 numeric features, plus identity/timestamp columns. It does not modify the database or train any models. The full suite now contains 20 tests.
 
 See [feature definitions](docs/features.md) for formulas, availability assumptions and missing-history handling. No PCA, correlation filtering or imputation is performed. Model-specific feature selection and train-only preprocessing belong to later training steps.
+
+## Step 5: prepare targets and split by time and truck
+
+From the cloned folder, run these commands one at a time:
+
+```bash
+git pull
+python -m pip install -e .
+python -m tyremind.ml.split
+python -m unittest discover -s tests -v
+```
+
+Requires Step 4's `data/features/tyre_features.csv` and Step 1's matching `data/generated/evaluation_labels.csv`. Do not mix files generated with different settings/seeds. The command prepares synthetic tread-depth targets at exactly another 5,000 km and creates training, validation and final testing datasets. No model is trained, and no imputation/scaling is fitted. The suite now contains 26 tests.
+
+Results are in `data/splits/`: `train.csv`, `validation_seen.csv`, `validation_unseen.csv`, `test_seen.csv`, `test_unseen.csv`, `excluded.csv`, and `split_report.json`. See [split design](docs/splits.md) for boundaries, counts, exclusions and target definitions. Output files are regenerated on rerun and excluded from Git.
