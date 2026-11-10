@@ -1,6 +1,6 @@
 # TyreMind AI
 
-Automated tyre monitoring proof of concept. **Implemented: Phase 1, Steps 1–2 — historical generation and Pandas preprocessing.** Database creation, ML, agents and the dashboard are future steps.
+Automated tyre monitoring proof of concept. **Implemented: Phase 1, Steps 1–3 — historical generation, Pandas preprocessing and SQLite storage.** ML, agents and the dashboard are future steps.
 
 ## Run
 
@@ -83,3 +83,34 @@ Timestamps become UTC and numeric values are explicitly converted. Checks includ
 A missing required column or missing input file stops processing before any new output is written; existing output from an earlier successful run can remain. Rejected rows have `source_row` (CSV header is row 1) and `rejection_reasons`. A row may have several reasons. Additional columns are reported and excluded from clean output. Simulation evaluation labels are intentionally excluded from operational preprocessing and remain in the original generated directory.
 
 Expected default result: all 21,600 telemetry rows accepted and zero rejected across the five operational tables. Rejected CSVs still contain headers when empty. The full test suite has 10 tests, including deliberately corrupted temporary inputs; these tests do not alter your dataset.
+
+## Step 3: store clean records in SQLite
+
+Update your cloned repository and install the new command:
+
+```bash
+git pull
+python -m pip install -e .
+python -m tyremind.database.load
+```
+
+This reads the five CSVs in `data/processed/clean/`. If they do not exist yet, run the generation and preprocessing commands from Steps 1–2 first.
+
+The loader creates `data/tyremind.db` using Python's built-in `sqlite3` (no extra dependency or database server). It creates trucks, tyres, telemetry, inspections and maintenance_events tables, primary and foreign keys, nonnegative-value constraints and query indexes. All writes are inside one transaction. It revalidates input before importing; foreign keys are explicitly enabled on its connection. Every future database connection must also enable foreign keys.
+
+```bash
+python -m tyremind.database.load --input data/processed/clean --database data/tyremind.db
+python -m unittest discover -s tests -v
+```
+
+Expected first import: 20 trucks, 120 tyres, 21,600 telemetry records, 1,699 inspections and 20 maintenance events. Importing identical records again inserts zero rows. Existing keys with changed values raise an error and roll back all writes instead of silently overwriting history. Existing records absent from the input are retained. This loader is for complete cleaned historical exports; incremental live ingestion and replacement lifecycles will be implemented separately.
+
+The printed report includes input, inserted, unchanged and total counts for each table. Database row counts and foreign keys are checked before commit. The complete suite now has 14 tests, including persistence, repeat imports, constraint enforcement and rollback. Generated database files are excluded from Git.
+
+To check the stored telemetry count without installing any SQLite extension:
+
+```bash
+python -c "import sqlite3; c=sqlite3.connect('data/tyremind.db'); print(c.execute('SELECT COUNT(*) FROM telemetry').fetchone()[0]); c.close()"
+```
+
+Expected: `21600`. Database schema changes will need migrations in future steps; this version only initializes new tables and does not migrate existing schemas.
