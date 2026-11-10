@@ -7,9 +7,10 @@ name = "tyremind-ai"
 version = "0.1.0"
 description = "Synthetic tyre monitoring proof of concept"
 requires-python = ">=3.10"
-dependencies = ["numpy>=1.24,<3", "pandas>=2,<3"]
+dependencies = ["numpy>=1.24,<3", "pandas>=2,<3", "pypdf>=5,<7"]
 
 [project.scripts]
+tyremind-chunk-docs = "tyremind.rag.chunk:main"
 tyremind-collect-docs = "tyremind.rag.collect:main"
 tyremind-split = "tyremind.ml.split:main"
 tyremind-features = "tyremind.features.build:main"
