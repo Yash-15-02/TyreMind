@@ -1,0 +1,929 @@
+{
+  "model": "IsolationForest",
+  "feature_columns": [
+    "pressure_deviation_ratio",
+    "pressure_change_kpa_per_day",
+    "temperature_mean_7d_c",
+    "temperature_std_7d_c",
+    "load_mean_7d",
+    "overload_fraction_7d",
+    "historical_wear_mm_per_1000km"
+  ],
+  "label_definition": "scenario_active OR overload_active; no tread safety threshold",
+  "normal_reference_rule": "No active injected fault or truck overload in trailing 28 days; at least 3 readings in trailing 7 days.",
+  "training_rows": 6211,
+  "warmup_excluded_rows": 240,
+  "training_fault_rows": 0,
+  "validation_start": "2026-04-19T00:00:00+00:00",
+  "test_start": "2026-05-25T00:00:00+00:00",
+  "truck_groups": {
+    "train": [
+      "TRK-001",
+      "TRK-004",
+      "TRK-006",
+      "TRK-007",
+      "TRK-008",
+      "TRK-010",
+      "TRK-011",
+      "TRK-012",
+      "TRK-013",
+      "TRK-015",
+      "TRK-016",
+      "TRK-017",
+      "TRK-019",
+      "TRK-020"
+    ],
+    "validation": [
+      "TRK-003",
+      "TRK-005",
+      "TRK-018"
+    ],
+    "test": [
+      "TRK-002",
+      "TRK-009",
+      "TRK-014"
+    ]
+  },
+  "seed": 42,
+  "validation_fpr_limit": 0.05,
+  "selection_policy": "Maximize balanced validation F2 with FPR <= limit separately in seen/unseen groups.",
+  "selected": {
+    "candidate": 2,
+    "parameters": {
+      "n_estimators": 200,
+      "max_samples": 256,
+      "max_features": 0.8
+    },
+    "threshold": 0.5793068361103214,
+    "balanced_f2": 0.3753941624803586,
+    "balanced_recall": 0.34145635166043325,
+    "validation": {
+      "validation_seen": {
+        "rows": 3024,
+        "normal_rows": 945,
+        "fault_rows": 2079,
+        "precision": 0.9643410852713178,
+        "recall": 0.5983645983645983,
+        "f1": 0.738498070644108,
+        "f2": 0.6475119716843639,
+        "accuracy": 0.7086640211640212,
+        "false_positive_rate": 0.04867724867724868,
+        "specificity": 0.9513227513227513,
+        "average_precision": 0.955448115796099,
+        "roc_auc": 0.9095383158875223,
+        "confusion_matrix": {
+          "tn": 899,
+          "fp": 46,
+          "fn": 835,
+          "tp": 1244
+        }
+      },
+      "validation_unseen": {
+        "rows": 648,
+        "normal_rows": 305,
+        "fault_rows": 343,
+        "precision": 0.90625,
+        "recall": 0.08454810495626822,
+        "f1": 0.15466666666666667,
+        "f2": 0.10327635327635327,
+        "accuracy": 0.5108024691358025,
+        "false_positive_rate": 0.009836065573770493,
+        "specificity": 0.9901639344262295,
+        "average_precision": 0.8115136903216561,
+        "roc_auc": 0.8227214070639965,
+        "confusion_matrix": {
+          "tn": 302,
+          "fp": 3,
+          "fn": 314,
+          "tp": 29
+        }
+      }
+    }
+  },
+  "candidates": [
+    {
+      "candidate": 0,
+      "parameters": {
+        "n_estimators": 200,
+        "max_samples": 256,
+        "max_features": 1.0
+      },
+      "threshold": 0.5882223106275446,
+      "balanced_f2": 0.3401313305697748,
+      "balanced_recall": 0.3092784011151358,
+      "validation": {
+        "validation_seen": {
+          "rows": 3024,
+          "normal_rows": 945,
+          "fault_rows": 2079,
+          "precision": 0.9658813972380179,
+          "recall": 0.5719095719095719,
+          "f1": 0.718429003021148,
+          "f2": 0.6227087043050172,
+          "accuracy": 0.6917989417989417,
+          "false_positive_rate": 0.044444444444444446,
+          "specificity": 0.9555555555555556,
+          "average_precision": 0.9497932553263079,
+          "roc_auc": 0.8983343131491279,
+          "confusion_matrix": {
+            "tn": 903,
+            "fp": 42,
+            "fn": 890,
+            "tp": 1189
+          }
+        },
+        "validation_unseen": {
+          "rows": 648,
+          "normal_rows": 305,
+          "fault_rows": 343,
+          "precision": 0.8888888888888888,
+          "recall": 0.04664723032069971,
+          "f1": 0.0886426592797784,
+          "f2": 0.05755395683453238,
+          "accuracy": 0.49228395061728397,
+          "false_positive_rate": 0.006557377049180328,
+          "specificity": 0.9934426229508196,
+          "average_precision": 0.7700533581384965,
+          "roc_auc": 0.7905845242078097,
+          "confusion_matrix": {
+            "tn": 303,
+            "fp": 2,
+            "fn": 327,
+            "tp": 16
+          }
+        }
+      }
+    },
+    {
+      "candidate": 1,
+      "parameters": {
+        "n_estimators": 200,
+        "max_samples": 512,
+        "max_features": 1.0
+      },
+      "threshold": 0.5874070240543133,
+      "balanced_f2": 0.37413956357385325,
+      "balanced_recall": 0.3404796261939119,
+      "validation": {
+        "validation_seen": {
+          "rows": 3024,
+          "normal_rows": 945,
+          "fault_rows": 2079,
+          "precision": 0.9636504253673627,
+          "recall": 0.5993265993265994,
+          "f1": 0.7390272835112692,
+          "f2": 0.6483505047351441,
+          "accuracy": 0.708994708994709,
+          "false_positive_rate": 0.04973544973544974,
+          "specificity": 0.9502645502645503,
+          "average_precision": 0.9589159734044519,
+          "roc_auc": 0.9204455744138285,
+          "confusion_matrix": {
+            "tn": 898,
+            "fp": 47,
+            "fn": 833,
+            "tp": 1246
+          }
+        },
+        "validation_unseen": {
+          "rows": 648,
+          "normal_rows": 305,
+          "fault_rows": 343,
+          "precision": 0.9655172413793104,
+          "recall": 0.08163265306122448,
+          "f1": 0.15053763440860216,
+          "f2": 0.09992862241256245,
+          "accuracy": 0.5123456790123457,
+          "false_positive_rate": 0.003278688524590164,
+          "specificity": 0.9967213114754099,
+          "average_precision": 0.8404899077065753,
+          "roc_auc": 0.8431678057639919,
+          "confusion_matrix": {
+            "tn": 304,
+            "fp": 1,
+            "fn": 315,
+            "tp": 28
+          }
+        }
+      }
+    },
+    {
+      "candidate": 2,
+      "parameters": {
+        "n_estimators": 200,
+        "max_samples": 256,
+        "max_features": 0.8
+      },
+      "threshold": 0.5793068361103214,
+      "balanced_f2": 0.3753941624803586,
+      "balanced_recall": 0.34145635166043325,
+      "validation": {
+        "validation_seen": {
+          "rows": 3024,
+          "normal_rows": 945,
+          "fault_rows": 2079,
+          "precision": 0.9643410852713178,
+          "recall": 0.5983645983645983,
+          "f1": 0.738498070644108,
+          "f2": 0.6475119716843639,
+          "accuracy": 0.7086640211640212,
+          "false_positive_rate": 0.04867724867724868,
+          "specificity": 0.9513227513227513,
+          "average_precision": 0.955448115796099,
+          "roc_auc": 0.9095383158875223,
+          "confusion_matrix": {
+            "tn": 899,
+            "fp": 46,
+            "fn": 835,
+            "tp": 1244
+          }
+        },
+        "validation_unseen": {
+          "rows": 648,
+          "normal_rows": 305,
+          "fault_rows": 343,
+          "precision": 0.90625,
+          "recall": 0.08454810495626822,
+          "f1": 0.15466666666666667,
+          "f2": 0.10327635327635327,
+          "accuracy": 0.5108024691358025,
+          "false_positive_rate": 0.009836065573770493,
+          "specificity": 0.9901639344262295,
+          "average_precision": 0.8115136903216561,
+          "roc_auc": 0.8227214070639965,
+          "confusion_matrix": {
+            "tn": 302,
+            "fp": 3,
+            "fn": 314,
+            "tp": 29
+          }
+        }
+      }
+    }
+  ],
+  "evaluations": {
+    "validation_seen": {
+      "overall": {
+        "rows": 3024,
+        "normal_rows": 945,
+        "fault_rows": 2079,
+        "precision": 0.9643410852713178,
+        "recall": 0.5983645983645983,
+        "f1": 0.738498070644108,
+        "f2": 0.6475119716843639,
+        "accuracy": 0.7086640211640212,
+        "false_positive_rate": 0.04867724867724868,
+        "specificity": 0.9513227513227513,
+        "average_precision": 0.955448115796099,
+        "roc_auc": 0.9095383158875223,
+        "confusion_matrix": {
+          "tn": 899,
+          "fp": 46,
+          "fn": 835,
+          "tp": 1244
+        }
+      },
+      "by_assigned_scenario": {
+        "accelerated_wear": {
+          "rows": 504,
+          "normal_rows": 0,
+          "fault_rows": 504,
+          "precision": 1.0,
+          "recall": 0.4305555555555556,
+          "f1": 0.6019417475728155,
+          "f2": 0.48589341692789967,
+          "accuracy": 0.4305555555555556,
+          "false_positive_rate": null,
+          "specificity": null,
+          "average_precision": null,
+          "roc_auc": null,
+          "confusion_matrix": {
+            "tn": 0,
+            "fp": 0,
+            "fn": 287,
+            "tp": 217
+          }
+        },
+        "elevated_temperature": {
+          "rows": 504,
+          "normal_rows": 0,
+          "fault_rows": 504,
+          "precision": 1.0,
+          "recall": 0.4166666666666667,
+          "f1": 0.5882352941176471,
+          "f2": 0.4716981132075472,
+          "accuracy": 0.4166666666666667,
+          "false_positive_rate": null,
+          "specificity": null,
+          "average_precision": null,
+          "roc_auc": null,
+          "confusion_matrix": {
+            "tn": 0,
+            "fp": 0,
+            "fn": 294,
+            "tp": 210
+          }
+        },
+        "maintenance_intervention": {
+          "rows": 504,
+          "normal_rows": 297,
+          "fault_rows": 207,
+          "precision": 0.9174757281553398,
+          "recall": 0.9130434782608695,
+          "f1": 0.9152542372881356,
+          "f2": 0.913926499032882,
+          "accuracy": 0.9305555555555556,
+          "false_positive_rate": 0.05723905723905724,
+          "specificity": 0.9427609427609428,
+          "average_precision": 0.95786350151219,
+          "roc_auc": 0.9770165422339335,
+          "confusion_matrix": {
+            "tn": 280,
+            "fp": 17,
+            "fn": 18,
+            "tp": 189
+          }
+        },
+        "normal": {
+          "rows": 504,
+          "normal_rows": 324,
+          "fault_rows": 180,
+          "precision": 0.9278350515463918,
+          "recall": 1.0,
+          "f1": 0.9625668449197861,
+          "f2": 0.9846827133479212,
+          "accuracy": 0.9722222222222222,
+          "false_positive_rate": 0.043209876543209874,
+          "specificity": 0.9567901234567902,
+          "average_precision": 0.9946551267086785,
+          "roc_auc": 0.9971707818930041,
+          "confusion_matrix": {
+            "tn": 310,
+            "fp": 14,
+            "fn": 0,
+            "tp": 180
+          }
+        },
+        "overloading": {
+          "rows": 504,
+          "normal_rows": 324,
+          "fault_rows": 180,
+          "precision": 0.9230769230769231,
+          "recall": 1.0,
+          "f1": 0.96,
+          "f2": 0.9836065573770492,
+          "accuracy": 0.9702380952380952,
+          "false_positive_rate": 0.046296296296296294,
+          "specificity": 0.9537037037037037,
+          "average_precision": 0.9827193086308177,
+          "roc_auc": 0.9919238683127573,
+          "confusion_matrix": {
+            "tn": 309,
+            "fp": 15,
+            "fn": 0,
+            "tp": 180
+          }
+        },
+        "slow_leak": {
+          "rows": 504,
+          "normal_rows": 0,
+          "fault_rows": 504,
+          "precision": 1.0,
+          "recall": 0.5317460317460317,
+          "f1": 0.694300518134715,
+          "f2": 0.5866900175131349,
+          "accuracy": 0.5317460317460317,
+          "false_positive_rate": null,
+          "specificity": null,
+          "average_precision": null,
+          "roc_auc": null,
+          "confusion_matrix": {
+            "tn": 0,
+            "fp": 0,
+            "fn": 236,
+            "tp": 268
+          }
+        }
+      },
+      "active_fault_recall": {
+        "accelerated_wear": {
+          "rows": 504,
+          "recall": 0.4305555555555556
+        },
+        "elevated_temperature": {
+          "rows": 504,
+          "recall": 0.4166666666666667
+        },
+        "maintenance_intervention": {
+          "rows": 55,
+          "recall": 0.6727272727272727
+        },
+        "overloading": {
+          "rows": 180,
+          "recall": 1.0
+        },
+        "slow_leak": {
+          "rows": 504,
+          "recall": 0.5317460317460317
+        },
+        "truck_overloading": {
+          "rows": 1080,
+          "recall": 1.0
+        }
+      }
+    },
+    "validation_unseen": {
+      "overall": {
+        "rows": 648,
+        "normal_rows": 305,
+        "fault_rows": 343,
+        "precision": 0.90625,
+        "recall": 0.08454810495626822,
+        "f1": 0.15466666666666667,
+        "f2": 0.10327635327635327,
+        "accuracy": 0.5108024691358025,
+        "false_positive_rate": 0.009836065573770493,
+        "specificity": 0.9901639344262295,
+        "average_precision": 0.8115136903216561,
+        "roc_auc": 0.8227214070639965,
+        "confusion_matrix": {
+          "tn": 302,
+          "fp": 3,
+          "fn": 314,
+          "tp": 29
+        }
+      },
+      "by_assigned_scenario": {
+        "accelerated_wear": {
+          "rows": 108,
+          "normal_rows": 0,
+          "fault_rows": 108,
+          "precision": 1.0,
+          "recall": 0.046296296296296294,
+          "f1": 0.08849557522123894,
+          "f2": 0.057208237986270026,
+          "accuracy": 0.046296296296296294,
+          "false_positive_rate": null,
+          "specificity": null,
+          "average_precision": null,
+          "roc_auc": null,
+          "confusion_matrix": {
+            "tn": 0,
+            "fp": 0,
+            "fn": 103,
+            "tp": 5
+          }
+        },
+        "elevated_temperature": {
+          "rows": 108,
+          "normal_rows": 0,
+          "fault_rows": 108,
+          "precision": 1.0,
+          "recall": 0.05555555555555555,
+          "f1": 0.10526315789473684,
+          "f2": 0.0684931506849315,
+          "accuracy": 0.05555555555555555,
+          "false_positive_rate": null,
+          "specificity": null,
+          "average_precision": null,
+          "roc_auc": null,
+          "confusion_matrix": {
+            "tn": 0,
+            "fp": 0,
+            "fn": 102,
+            "tp": 6
+          }
+        },
+        "maintenance_intervention": {
+          "rows": 108,
+          "normal_rows": 89,
+          "fault_rows": 19,
+          "precision": 0.25,
+          "recall": 0.05263157894736842,
+          "f1": 0.08695652173913043,
+          "f2": 0.0625,
+          "accuracy": 0.8055555555555556,
+          "false_positive_rate": 0.033707865168539325,
+          "specificity": 0.9662921348314607,
+          "average_precision": 0.46211121411488393,
+          "roc_auc": 0.8545239503252513,
+          "confusion_matrix": {
+            "tn": 86,
+            "fp": 3,
+            "fn": 18,
+            "tp": 1
+          }
+        },
+        "normal": {
+          "rows": 108,
+          "normal_rows": 108,
+          "fault_rows": 0,
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0,
+          "f2": 0.0,
+          "accuracy": 1.0,
+          "false_positive_rate": 0.0,
+          "specificity": 1.0,
+          "average_precision": null,
+          "roc_auc": null,
+          "confusion_matrix": {
+            "tn": 108,
+            "fp": 0,
+            "fn": 0,
+            "tp": 0
+          }
+        },
+        "overloading": {
+          "rows": 108,
+          "normal_rows": 108,
+          "fault_rows": 0,
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0,
+          "f2": 0.0,
+          "accuracy": 1.0,
+          "false_positive_rate": 0.0,
+          "specificity": 1.0,
+          "average_precision": null,
+          "roc_auc": null,
+          "confusion_matrix": {
+            "tn": 108,
+            "fp": 0,
+            "fn": 0,
+            "tp": 0
+          }
+        },
+        "slow_leak": {
+          "rows": 108,
+          "normal_rows": 0,
+          "fault_rows": 108,
+          "precision": 1.0,
+          "recall": 0.1574074074074074,
+          "f1": 0.272,
+          "f2": 0.18930957683741648,
+          "accuracy": 0.1574074074074074,
+          "false_positive_rate": null,
+          "specificity": null,
+          "average_precision": null,
+          "roc_auc": null,
+          "confusion_matrix": {
+            "tn": 0,
+            "fp": 0,
+            "fn": 91,
+            "tp": 17
+          }
+        }
+      },
+      "active_fault_recall": {
+        "accelerated_wear": {
+          "rows": 108,
+          "recall": 0.046296296296296294
+        },
+        "elevated_temperature": {
+          "rows": 108,
+          "recall": 0.05555555555555555
+        },
+        "maintenance_intervention": {
+          "rows": 19,
+          "recall": 0.05263157894736842
+        },
+        "slow_leak": {
+          "rows": 108,
+          "recall": 0.1574074074074074
+        }
+      }
+    },
+    "test_seen": {
+      "overall": {
+        "rows": 3024,
+        "normal_rows": 972,
+        "fault_rows": 2052,
+        "precision": 0.9882154882154882,
+        "recall": 0.5721247563352827,
+        "f1": 0.7246913580246913,
+        "f2": 0.6247339293316305,
+        "accuracy": 0.705026455026455,
+        "false_positive_rate": 0.01440329218106996,
+        "specificity": 0.98559670781893,
+        "average_precision": 0.9503032409438577,
+        "roc_auc": 0.8927368862256236,
+        "confusion_matrix": {
+          "tn": 958,
+          "fp": 14,
+          "fn": 878,
+          "tp": 1174
+        }
+      },
+      "by_assigned_scenario": {
+        "accelerated_wear": {
+          "rows": 504,
+          "normal_rows": 0,
+          "fault_rows": 504,
+          "precision": 1.0,
+          "recall": 0.44047619047619047,
+          "f1": 0.6115702479338843,
+          "f2": 0.4959785522788204,
+          "accuracy": 0.44047619047619047,
+          "false_positive_rate": null,
+          "specificity": null,
+          "average_precision": null,
+          "roc_auc": null,
+          "confusion_matrix": {
+            "tn": 0,
+            "fp": 0,
+            "fn": 282,
+            "tp": 222
+          }
+        },
+        "elevated_temperature": {
+          "rows": 504,
+          "normal_rows": 0,
+          "fault_rows": 504,
+          "precision": 1.0,
+          "recall": 0.38492063492063494,
+          "f1": 0.5558739255014327,
+          "f2": 0.43891402714932126,
+          "accuracy": 0.38492063492063494,
+          "false_positive_rate": null,
+          "specificity": null,
+          "average_precision": null,
+          "roc_auc": null,
+          "confusion_matrix": {
+            "tn": 0,
+            "fp": 0,
+            "fn": 310,
+            "tp": 194
+          }
+        },
+        "maintenance_intervention": {
+          "rows": 504,
+          "normal_rows": 324,
+          "fault_rows": 180,
+          "precision": 0.9836065573770492,
+          "recall": 1.0,
+          "f1": 0.9917355371900827,
+          "f2": 0.9966777408637874,
+          "accuracy": 0.9940476190476191,
+          "false_positive_rate": 0.009259259259259259,
+          "specificity": 0.9907407407407407,
+          "average_precision": 0.9988258462454387,
+          "roc_auc": 0.9993827160493827,
+          "confusion_matrix": {
+            "tn": 321,
+            "fp": 3,
+            "fn": 0,
+            "tp": 180
+          }
+        },
+        "normal": {
+          "rows": 504,
+          "normal_rows": 324,
+          "fault_rows": 180,
+          "precision": 0.994475138121547,
+          "recall": 1.0,
+          "f1": 0.997229916897507,
+          "f2": 0.9988901220865705,
+          "accuracy": 0.998015873015873,
+          "false_positive_rate": 0.0030864197530864196,
+          "specificity": 0.9969135802469136,
+          "average_precision": 0.9989224518807652,
+          "roc_auc": 0.9994513031550069,
+          "confusion_matrix": {
+            "tn": 323,
+            "fp": 1,
+            "fn": 0,
+            "tp": 180
+          }
+        },
+        "overloading": {
+          "rows": 504,
+          "normal_rows": 324,
+          "fault_rows": 180,
+          "precision": 0.9473684210526315,
+          "recall": 1.0,
+          "f1": 0.972972972972973,
+          "f2": 0.989010989010989,
+          "accuracy": 0.9801587301587301,
+          "false_positive_rate": 0.030864197530864196,
+          "specificity": 0.9691358024691358,
+          "average_precision": 0.9903450277668375,
+          "roc_auc": 0.9955589849108367,
+          "confusion_matrix": {
+            "tn": 314,
+            "fp": 10,
+            "fn": 0,
+            "tp": 180
+          }
+        },
+        "slow_leak": {
+          "rows": 504,
+          "normal_rows": 0,
+          "fault_rows": 504,
+          "precision": 1.0,
+          "recall": 0.43253968253968256,
+          "f1": 0.6038781163434903,
+          "f2": 0.4879140555058192,
+          "accuracy": 0.43253968253968256,
+          "false_positive_rate": null,
+          "specificity": null,
+          "average_precision": null,
+          "roc_auc": null,
+          "confusion_matrix": {
+            "tn": 0,
+            "fp": 0,
+            "fn": 286,
+            "tp": 218
+          }
+        }
+      },
+      "active_fault_recall": {
+        "accelerated_wear": {
+          "rows": 504,
+          "recall": 0.44047619047619047
+        },
+        "elevated_temperature": {
+          "rows": 504,
+          "recall": 0.38492063492063494
+        },
+        "overloading": {
+          "rows": 180,
+          "recall": 1.0
+        },
+        "slow_leak": {
+          "rows": 504,
+          "recall": 0.43253968253968256
+        },
+        "truck_overloading": {
+          "rows": 1080,
+          "recall": 1.0
+        }
+      }
+    },
+    "test_unseen": {
+      "overall": {
+        "rows": 648,
+        "normal_rows": 324,
+        "fault_rows": 324,
+        "precision": 0.8064516129032258,
+        "recall": 0.07716049382716049,
+        "f1": 0.14084507042253522,
+        "f2": 0.09419743782969103,
+        "accuracy": 0.529320987654321,
+        "false_positive_rate": 0.018518518518518517,
+        "specificity": 0.9814814814814815,
+        "average_precision": 0.736737556915748,
+        "roc_auc": 0.7507239750038103,
+        "confusion_matrix": {
+          "tn": 318,
+          "fp": 6,
+          "fn": 299,
+          "tp": 25
+        }
+      },
+      "by_assigned_scenario": {
+        "accelerated_wear": {
+          "rows": 108,
+          "normal_rows": 0,
+          "fault_rows": 108,
+          "precision": 1.0,
+          "recall": 0.12962962962962962,
+          "f1": 0.22950819672131148,
+          "f2": 0.15695067264573992,
+          "accuracy": 0.12962962962962962,
+          "false_positive_rate": null,
+          "specificity": null,
+          "average_precision": null,
+          "roc_auc": null,
+          "confusion_matrix": {
+            "tn": 0,
+            "fp": 0,
+            "fn": 94,
+            "tp": 14
+          }
+        },
+        "elevated_temperature": {
+          "rows": 108,
+          "normal_rows": 0,
+          "fault_rows": 108,
+          "precision": 1.0,
+          "recall": 0.018518518518518517,
+          "f1": 0.03636363636363636,
+          "f2": 0.02304147465437788,
+          "accuracy": 0.018518518518518517,
+          "false_positive_rate": null,
+          "specificity": null,
+          "average_precision": null,
+          "roc_auc": null,
+          "confusion_matrix": {
+            "tn": 0,
+            "fp": 0,
+            "fn": 106,
+            "tp": 2
+          }
+        },
+        "maintenance_intervention": {
+          "rows": 108,
+          "normal_rows": 108,
+          "fault_rows": 0,
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0,
+          "f2": 0.0,
+          "accuracy": 0.9907407407407407,
+          "false_positive_rate": 0.009259259259259259,
+          "specificity": 0.9907407407407407,
+          "average_precision": null,
+          "roc_auc": null,
+          "confusion_matrix": {
+            "tn": 107,
+            "fp": 1,
+            "fn": 0,
+            "tp": 0
+          }
+        },
+        "normal": {
+          "rows": 108,
+          "normal_rows": 108,
+          "fault_rows": 0,
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0,
+          "f2": 0.0,
+          "accuracy": 0.9814814814814815,
+          "false_positive_rate": 0.018518518518518517,
+          "specificity": 0.9814814814814815,
+          "average_precision": null,
+          "roc_auc": null,
+          "confusion_matrix": {
+            "tn": 106,
+            "fp": 2,
+            "fn": 0,
+            "tp": 0
+          }
+        },
+        "overloading": {
+          "rows": 108,
+          "normal_rows": 108,
+          "fault_rows": 0,
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0,
+          "f2": 0.0,
+          "accuracy": 0.9722222222222222,
+          "false_positive_rate": 0.027777777777777776,
+          "specificity": 0.9722222222222222,
+          "average_precision": null,
+          "roc_auc": null,
+          "confusion_matrix": {
+            "tn": 105,
+            "fp": 3,
+            "fn": 0,
+            "tp": 0
+          }
+        },
+        "slow_leak": {
+          "rows": 108,
+          "normal_rows": 0,
+          "fault_rows": 108,
+          "precision": 1.0,
+          "recall": 0.08333333333333333,
+          "f1": 0.15384615384615385,
+          "f2": 0.10204081632653061,
+          "accuracy": 0.08333333333333333,
+          "false_positive_rate": null,
+          "specificity": null,
+          "average_precision": null,
+          "roc_auc": null,
+          "confusion_matrix": {
+            "tn": 0,
+            "fp": 0,
+            "fn": 99,
+            "tp": 9
+          }
+        }
+      },
+      "active_fault_recall": {
+        "accelerated_wear": {
+          "rows": 108,
+          "recall": 0.12962962962962962
+        },
+        "elevated_temperature": {
+          "rows": 108,
+          "recall": 0.018518518518518517
+        },
+        "slow_leak": {
+          "rows": 108,
+          "recall": 0.08333333333333333
+        }
+      }
+    }
+  },
+  "versions": {
+    "scikit-learn": "1.8.0",
+    "numpy": "2.3.5",
+    "pandas": "2.2.3",
+    "joblib": "1.5.3"
+  },
+  "limitations": "Synthetic row-level detection only. Labels curate normal reference and tune threshold; forest fitting is unsupervised. No diagnosis, safety certification or event-level detection guarantee."
+}
