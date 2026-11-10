@@ -1,0 +1,134 @@
+{
+  "seed": 42,
+  "horizon_km": 5000,
+  "selection_metric": "Mean across folds of 0.5 \u00d7 seen MAE + 0.5 \u00d7 unseen MAE",
+  "best_ml_model_by_cv": "xgboost",
+  "recommended_by_cv_including_baselines": "wear_rate",
+  "best_candidates": {
+    "random_forest": {
+      "model": "random_forest",
+      "candidate": 2,
+      "parameters": {
+        "n_estimators": 200,
+        "max_depth": 8,
+        "min_samples_leaf": 5,
+        "max_features": 1.0
+      },
+      "cv_balanced_mae_mm": 0.20561365957356306,
+      "cv_fold_mae_std_mm": 0.054276943138593325,
+      "cv_fold_mae_mm": [
+        0.13661853257047504,
+        0.2109781804589306,
+        0.26924426569128357
+      ]
+    },
+    "xgboost": {
+      "model": "xgboost",
+      "candidate": 0,
+      "parameters": {
+        "n_estimators": 200,
+        "max_depth": 3,
+        "learning_rate": 0.05,
+        "subsample": 0.8,
+        "colsample_bytree": 0.8,
+        "reg_lambda": 5
+      },
+      "cv_balanced_mae_mm": 0.19990752695956482,
+      "cv_fold_mae_std_mm": 0.05278762831777688,
+      "cv_fold_mae_mm": [
+        0.1368013360495421,
+        0.19692068818266917,
+        0.2660005566464832
+      ]
+    }
+  },
+  "cv_summary": {
+    "random_forest": {
+      "balanced_mae_mm": 0.20561365957356306,
+      "fold_mae_std_mm": 0.054276943138593325,
+      "balanced_mean_rmse_mm": 0.307727356362734,
+      "balanced_mean_r2": 0.8915505020556903,
+      "balanced_mean_within_0_25mm_fraction": 0.7426547966094831,
+      "balanced_mean_within_0_5mm_fraction": 0.8817192223940394
+    },
+    "xgboost": {
+      "balanced_mae_mm": 0.19990752695956482,
+      "fold_mae_std_mm": 0.05278762831777688,
+      "balanced_mean_rmse_mm": 0.31045037779685375,
+      "balanced_mean_r2": 0.8900835565258346,
+      "balanced_mean_within_0_25mm_fraction": 0.765936061791443,
+      "balanced_mean_within_0_5mm_fraction": 0.8796683318182291
+    }
+  },
+  "cv_baseline_mae_mm": {
+    "latest_tread": 0.572878506771915,
+    "wear_rate": 0.18259535146357372
+  },
+  "folds": [
+    {
+      "fold": 1,
+      "validation_start": "2026-02-06T00:00:00+00:00",
+      "validation_end": "2026-03-14T00:00:00+00:00",
+      "training_rows": 1368,
+      "seen_rows": 1338,
+      "unseen_rows": 294,
+      "latest_training_target": "2026-02-05T00:00:00+00:00"
+    },
+    {
+      "fold": 2,
+      "validation_start": "2026-03-14T00:00:00+00:00",
+      "validation_end": "2026-04-19T00:00:00+00:00",
+      "training_rows": 4362,
+      "seen_rows": 1380,
+      "unseen_rows": 282,
+      "latest_training_target": "2026-03-13T00:00:00+00:00"
+    },
+    {
+      "fold": 3,
+      "validation_start": "2026-04-19T00:00:00+00:00",
+      "validation_end": "2026-05-25T00:00:00+00:00",
+      "training_rows": 7428,
+      "seen_rows": 1350,
+      "unseen_rows": 288,
+      "latest_training_target": "2026-04-18T00:00:00+00:00"
+    }
+  ],
+  "truck_groups": {
+    "train": [
+      "TRK-001",
+      "TRK-004",
+      "TRK-006",
+      "TRK-007",
+      "TRK-008",
+      "TRK-010",
+      "TRK-011",
+      "TRK-012",
+      "TRK-013",
+      "TRK-015",
+      "TRK-016",
+      "TRK-017",
+      "TRK-019",
+      "TRK-020"
+    ],
+    "validation": [
+      "TRK-003",
+      "TRK-005",
+      "TRK-018"
+    ],
+    "test": [
+      "TRK-002",
+      "TRK-009",
+      "TRK-014"
+    ]
+  },
+  "final_training_rows": 10422,
+  "test_start": "2026-05-25T00:00:00+00:00",
+  "versions": {
+    "scikit-learn": "1.8.0",
+    "xgboost": "3.4.1",
+    "pandas": "2.2.3",
+    "numpy": "2.3.5",
+    "joblib": "1.5.3"
+  },
+  "limitations": "Synthetic-data performance only. No precision/recall for regression. Fold variation is not a confidence interval. Final test metrics never select parameters/models."
+}
