@@ -1,6 +1,6 @@
 # TyreMind technical reference collection
 
-Four official-source PDFs were downloaded and checked on 2026-11-10. `sources.json` records titles, publishers, editions, regions, URLs, topics and section hints. This is document collection only: chunking, embeddings, ChromaDB and agent retrieval are later steps.
+Three manufacturer PDFs are enabled. FMCSA is disabled at the user's request after HTTP 403; its catalog entry remains for provenance. `sources.json` records titles, publishers, editions, regions, URLs, topics and section hints. Source-preserving chunking is implemented; embeddings, ChromaDB and agent retrieval are later steps. See [chunking instructions](../docs/chunking.md).
 
 | Source | Intended role |
 |---|---|
