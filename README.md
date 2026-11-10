@@ -1,6 +1,6 @@
 # TyreMind AI
 
-Automated tyre monitoring proof of concept. **Implemented: Phase 1, Steps 1–3 — historical generation, Pandas preprocessing and SQLite storage.** ML, agents and the dashboard are future steps.
+Automated tyre monitoring proof of concept. **Implemented: Phase 1, Steps 1–4 — historical generation, Pandas preprocessing, SQLite storage and feature engineering.** ML, agents and the dashboard are future steps.
 
 ## Run
 
@@ -114,3 +114,18 @@ python -c "import sqlite3; c=sqlite3.connect('data/tyremind.db'); print(c.execut
 ```
 
 Expected: `21600`. Database schema changes will need migrations in future steps; this version only initializes new tables and does not migrate existing schemas.
+
+## Step 4: point-in-time feature engineering
+
+From the cloned project folder, run each command separately:
+
+```bash
+git pull
+python -m pip install -e .
+python -m tyremind.features.build
+python -m unittest discover -s tests -v
+```
+
+Requires the Step 3 database. If starting fresh, run generation, preprocessing and database loading first. Step 4 opens the database read-only and exports `data/features/tyre_features.csv` plus `data/features/feature_report.json`. Default output: 21,600 rows, 120 tyres and 19 numeric features, plus identity/timestamp columns. It does not modify the database or train any models. The full suite now contains 20 tests.
+
+See [feature definitions](docs/features.md) for formulas, availability assumptions and missing-history handling. No PCA, correlation filtering or imputation is performed. Model-specific feature selection and train-only preprocessing belong to later training steps.
