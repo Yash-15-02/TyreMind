@@ -212,3 +212,14 @@ python -m unittest discover -s tests -v
 ```
 
 The model fits seven operating/wear features on normal-reference history, calibrates its threshold using validation data only, and reports precision/recall/F1/F2, false-alert rates and held-out-truck performance. Saved pipeline and reports are in `models/anomaly/`. All 55 tests pass with optional dependencies installed. **Measured held-out recall is only 7.72% at the selected threshold; this experimental model must not be the sole alert gate.** See [design, commands and measured results](docs/isolation_forest.md). This does not mark worn-out tyres or implement the scheduled risk engine.
+
+## Final check: reload, evaluate and inventory saved models
+
+```powershell
+git pull
+python -m pip install -e ".[ml]"
+python -m tyremind.ml.finalize
+python -m unittest discover -s tests -v
+```
+
+Requires both training commands to have completed locally. This command reloads the three saved models, verifies unchanged input exports and reproduces their recorded held-out metrics. It does not retrain or retune. Expected: 3 verified models; outputs in `models/evaluation/`. The complete test suite now has 57 tests with optional dependencies installed. See [final model inventory and commands](docs/model_finalization.md).
