@@ -10,6 +10,7 @@ requires-python = ">=3.10"
 dependencies = ["numpy>=1.24,<3", "pandas>=2,<3"]
 
 [project.scripts]
+tyremind-preprocess = "tyremind.data.preprocess:main"
 tyremind-generate = "tyremind.data.generate:main"
 
 [tool.setuptools.packages.find]
