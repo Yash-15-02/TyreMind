@@ -10,9 +10,10 @@ requires-python = ">=3.10"
 dependencies = ["numpy>=1.24,<3", "pandas>=2,<3", "pypdf>=5,<7", "fonttools>=4,<5"]
 
 [project.optional-dependencies]
-rag = ["sentence-transformers>=3,<6"]
+rag = ["sentence-transformers>=3,<6", "chromadb>=1.5.9,<2"]
 
 [project.scripts]
+tyremind-store-docs = "tyremind.rag.store:main"
 tyremind-embed-docs = "tyremind.rag.embed:main"
 tyremind-chunk-docs = "tyremind.rag.chunk:main"
 tyremind-collect-docs = "tyremind.rag.collect:main"
