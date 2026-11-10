@@ -179,3 +179,14 @@ python -m unittest discover -s tests -v
 ```
 
 This encodes the existing source-linked passages locally with sentence-transformers/all-MiniLM-L6-v2. The first run downloads model weights; no API key or GPU is needed. Default result: 82 vectors with 384 values each, saved alongside source metadata under `data/knowledge/embeddings/`. Token-limit checks avoid silent passage truncation. The full suite has 38 tests. See [embedding instructions](docs/embeddings.md). ChromaDB indexing is the next step.
+
+## Store embeddings in local ChromaDB
+
+```powershell
+git pull
+python -m pip install -e ".[rag]"
+python -m tyremind.rag.store
+python -m unittest discover -s tests -v
+```
+
+No ChromaDB account/API key is needed. The importer reuses your existing embeddings and saves 82 passage/vector/source records in `data/knowledge/chroma/`. Rerunning the same import adds zero duplicates. `active_index.json` identifies the current verified collection. All 42 tests pass with the optional dependencies installed. See [ChromaDB instructions](docs/chromadb.md). General retrieval and agent tools remain later work.
