@@ -144,3 +144,16 @@ python -m unittest discover -s tests -v
 Requires Step 4's `data/features/tyre_features.csv` and Step 1's matching `data/generated/evaluation_labels.csv`. Do not mix files generated with different settings/seeds. The command prepares synthetic tread-depth targets at exactly another 5,000 km and creates training, validation and final testing datasets. No model is trained, and no imputation/scaling is fitted. The suite now contains 26 tests.
 
 Results are in `data/splits/`: `train.csv`, `validation_seen.csv`, `validation_unseen.csv`, `test_seen.csv`, `test_unseen.csv`, `excluded.csv`, and `split_report.json`. See [split design](docs/splits.md) for boundaries, counts, exclusions and target definitions. Output files are regenerated on rerun and excluded from Git.
+
+## Collect technical documents for RAG
+
+Four official reference PDFs have been selected and download-verified. To collect them locally:
+
+```bash
+git pull
+python -m pip install -e .
+python -m tyremind.rag.collect
+python -m unittest discover -s tests -v
+```
+
+Expected collection summary: `Downloaded 4; failed 0.` Output: `data/knowledge/raw/` with PDFs and a collection manifest. The source catalog and usage notes are in [knowledge/README.md](knowledge/README.md) and [knowledge/sources.json](knowledge/sources.json). Publisher originals are not committed to Git. No embeddings or ChromaDB index are built yet. The complete test suite now has 29 tests.
