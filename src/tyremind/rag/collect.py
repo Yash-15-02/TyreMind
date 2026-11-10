@@ -15,7 +15,8 @@ MAX_BYTES = 25 * 1024 * 1024
 
 
 def collect(catalog=Path('knowledge/sources.json'), output=Path('data/knowledge/raw')):
-    entries = json.loads(Path(catalog).read_text(encoding='utf-8'))['sources']
+    entries = [source for source in json.loads(Path(catalog).read_text(encoding='utf-8'))['sources']
+               if source.get('enabled', True)]
     output = Path(output)
     output.mkdir(parents=True, exist_ok=True)
     # Respect managed environments' CA settings; never disable TLS verification.
