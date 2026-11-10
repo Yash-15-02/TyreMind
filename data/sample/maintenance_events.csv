@@ -1,0 +1,13 @@
+event_id,tyre_id,timestamp,event_type
+MAINT-00001,TYR-0006,2026-04-22T00:00:00+00:00,simulated_leak_repair_and_reinflation
+MAINT-00002,TYR-0012,2026-04-07T00:00:00+00:00,simulated_leak_repair_and_reinflation
+MAINT-00003,TYR-0018,2026-04-21T00:00:00+00:00,simulated_leak_repair_and_reinflation
+MAINT-00004,TYR-0024,2026-04-08T00:00:00+00:00,simulated_leak_repair_and_reinflation
+MAINT-00005,TYR-0030,2026-05-06T00:00:00+00:00,simulated_leak_repair_and_reinflation
+MAINT-00006,TYR-0036,2026-04-25T00:00:00+00:00,simulated_leak_repair_and_reinflation
+MAINT-00007,TYR-0042,2026-04-09T00:00:00+00:00,simulated_leak_repair_and_reinflation
+MAINT-00008,TYR-0048,2026-04-24T00:00:00+00:00,simulated_leak_repair_and_reinflation
+MAINT-00009,TYR-0054,2026-04-24T00:00:00+00:00,simulated_leak_repair_and_reinflation
+MAINT-00010,TYR-0060,2026-04-29T00:00:00+00:00,simulated_leak_repair_and_reinflation
+MAINT-00011,TYR-0066,2026-04-16T00:00:00+00:00,simulated_leak_repair_and_reinflation
+MAINT-00012,TYR-0072,2026-04-28T00:00:00+00:00,simulated_leak_repair_and_reinflation
