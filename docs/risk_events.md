@@ -1,5 +1,7 @@
 # Phase 2, Step 7: risk cases and deduplicated investigation queue
 
+The default worker now also publishes the Phase 3 inbox after queueing. Use `--events-only` to stop at this guide's endpoint; the standalone event handler remains unchanged. See [Phase 3 handoff](phase3_handoff.md).
+
 ## Run on Windows
 
 Stop the worker with Ctrl+C before pulling. From the cloned repository root, run one command at a time:
