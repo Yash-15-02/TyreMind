@@ -1,5 +1,6 @@
 """Historical continuity, durable batches, restart RNG and worker integration."""
 import hashlib
+from contextlib import closing
 import json
 import sqlite3
 import subprocess
@@ -72,7 +73,7 @@ class SimulatorTests(unittest.TestCase):
         recovered = self.batch()
         self.assertEqual(recovered['batch_id'], 1)
         self.assertEqual(self.batch()['batch_id'], 2)
-        with sqlite3.connect(self.output / 'simulator.db') as connection:
+        with closing(sqlite3.connect(self.output / 'simulator.db')) as connection:
             self.assertEqual(connection.execute('SELECT COUNT(*) FROM batches').fetchone()[0], 2)
 
     def test_seed_mismatch_rejected(self):
