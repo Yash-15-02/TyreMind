@@ -120,7 +120,7 @@ class PredictionTests(unittest.TestCase):
             self.assertEqual(c.execute('SELECT COUNT(*) FROM predictions').fetchone()[0],12)
 
     def test_worker_loads_and_runs_saved_models(self):
-        result=subprocess.run([sys.executable,'-m','tyremind.monitoring.worker','--run-once',
+        result=subprocess.run([sys.executable,'-m','tyremind.monitoring.worker','--run-once','--prediction-only',
                                '--source-database',str(self.database),'--history',str(self.history),
                                '--simulator-output',str(self.root/'simulator'),'--output',str(self.root/'worker'),
                                '--feature-output',str(self.root/'features'),'--prediction-output',str(self.output),
