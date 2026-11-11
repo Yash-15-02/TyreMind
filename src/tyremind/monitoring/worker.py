@@ -1,4 +1,4 @@
-"""Schedule fleet telemetry simulation; later steps add ingestion and inference."""
+"""Schedule fleet telemetry generation, validation and SQLite ingestion."""
 import argparse
 import json
 import logging
@@ -161,8 +161,8 @@ def main():
     args = parser.parse_args()
     cycle = None
     if not args.heartbeat_only:
-        from tyremind.monitoring.simulator import generate_next_batch
-        cycle = lambda: generate_next_batch(args.source_database, args.history, args.simulator_output, args.simulation_seed)
+        from tyremind.monitoring.ingest import run_ingestion_cycle
+        cycle = lambda: run_ingestion_cycle(args.source_database, args.history, args.simulator_output, args.simulation_seed)
     worker = MonitoringWorker(args.interval_seconds, args.output, cycle=cycle, max_cycles=args.max_cycles)
     try:
         if args.run_once:
