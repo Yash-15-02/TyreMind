@@ -19,3 +19,4 @@ models/wear/
 models/anomaly/
 models/evaluation/
 data/monitoring/
+data/simulator/
