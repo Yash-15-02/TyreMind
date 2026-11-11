@@ -267,3 +267,14 @@ python -m unittest discover -s tests -v
 ```
 
 This calculates the latest 19-feature row per tyre from operational history using the original training feature builder. Output is stored in SQLite's `current_features` table and `data/monitoring/features/`; historical training CSVs remain unchanged. Missing history remains missing and older tyre readings are explicitly marked stale. The default worker now generates, validates, ingests and refreshes features each cycle. Full suite: 85 tests. See [current feature instructions](docs/current_features.md). Inference remains the next step.
+
+## Phase 2, Step 5: run saved Random Forest and Isolation Forest
+
+```powershell
+git pull
+python -m pip install -e ".[ml]"
+python -m tyremind.monitoring.predict
+python -m unittest discover -s tests -v
+```
+
+Saved RF predicts tread depth after another 5,000 km; saved IF produces anomaly scores/flags at its calibrated threshold. Neither model is retrained. Results are stored in SQLite's `predictions` table and `data/monitoring/predictions/`. Stale/warmup rows are explicitly skipped. The default worker now includes inference; `--features-only` keeps Step 4 behavior. XGBoost remains optional via `--wear-model xgboost`. Full suite: 92 tests. See [saved inference commands and limitations](docs/saved_inference.md). Risk/event handling is next.
