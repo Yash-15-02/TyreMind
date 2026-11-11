@@ -278,3 +278,14 @@ python -m unittest discover -s tests -v
 ```
 
 Saved RF predicts tread depth after another 5,000 km; saved IF produces anomaly scores/flags at its calibrated threshold. Neither model is retrained. Results are stored in SQLite's `predictions` table and `data/monitoring/predictions/`. Stale/warmup rows are explicitly skipped. The default worker now includes inference; `--features-only` keeps Step 4 behavior. XGBoost remains optional via `--wear-model xgboost`. Full suite: 92 tests. See [saved inference commands and limitations](docs/saved_inference.md). Risk/event handling is next.
+
+## Phase 2, Step 6: assign deterministic risk levels
+
+```powershell
+git pull
+python -m pip install -e ".[ml]"
+python -m tyremind.monitoring.risk
+python -m unittest discover -s tests -v
+```
+
+Python rules combine current pressure/temperature/trends, measured tread, future tread prediction and IF evidence. Highest severity wins; an IF normal result cannot cancel direct alerts. Policy thresholds live in `config/risk_rules.json` and are explicitly synthetic-demo assumptions. Results/evidence are saved in SQLite `risk_assessments` and `data/monitoring/risk/`. Stale/incomplete evidence is distinguished from Normal. The worker includes risk classification by default; `--prediction-only` stops before it. Full suite: 107 tests. See [risk rules and exact thresholds](docs/risk_rules.md). Investigation events/agents are not connected yet.
