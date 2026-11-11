@@ -23,13 +23,14 @@ class Config:
     start_date: str = "2026-01-01"
 
 
-def generate(config: Config) -> dict[str, pd.DataFrame]:
+def generate(config: Config, *, include_state: bool = False) -> dict[str, pd.DataFrame]:
     """Return relational CSV-ready tables without writing to disk."""
     if config.trucks < 1 or config.days < 30:
         raise ValueError("Use at least one truck and 30 days.")
     rng = np.random.default_rng(config.seed)
     dates = pd.date_range(config.start_date, periods=config.days, freq="D", tz="UTC")
     trucks, tyres, telemetry, inspections, maintenance, labels = [], [], [], [], [], []
+    continuation = []
     for truck_index in range(config.trucks):
         truck_id = f"TRK-{truck_index + 1:03d}"
         trucks.append(dict(truck_id=truck_id, vehicle_type="simulated_6_position_truck"))
@@ -95,13 +96,21 @@ def generate(config: Config) -> dict[str, pd.DataFrame]:
                                                         active and scenario != "normal" and not repaired),
                                    overload_active=bool(overloaded),
                                    simulated_true_tread_depth_mm=round(tread, 4)))
-    return {
+            if include_state:
+                continuation.append(dict(truck_id=truck_id, tyre_id=tyre_id, truck_index=truck_index,
+                                         reference_pressure_kpa=reference, initial_tread_depth_mm=initial_tread,
+                                         base_wear=base_wear, tread_depth_mm=tread, mileage_km=float(mileage),
+                                         scenario=scenario, onset=onset, service_day=service_day))
+    tables = {
         "trucks": pd.DataFrame(trucks), "tyres": pd.DataFrame(tyres),
         "telemetry": pd.DataFrame(telemetry), "inspections": pd.DataFrame(inspections),
         "maintenance_events": pd.DataFrame(maintenance, columns=[
             "event_id", "tyre_id", "timestamp", "event_type"]),
         "evaluation_labels": pd.DataFrame(labels),
     }
+    if include_state:
+        tables["simulator_state"] = pd.DataFrame(continuation)
+    return tables
 
 
 def write_dataset(config: Config, output: Path) -> dict:
