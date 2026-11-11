@@ -223,3 +223,13 @@ python -m unittest discover -s tests -v
 ```
 
 Requires both training commands to have completed locally. This command reloads the three saved models, verifies unchanged input exports and reproduces their recorded held-out metrics. It does not retrain or retune. Expected: 3 verified models; outputs in `models/evaluation/`. The complete test suite now has 57 tests with optional dependencies installed. See [final model inventory and commands](docs/model_finalization.md).
+
+## Phase 2, Step 1: 60-second scheduler worker
+
+```powershell
+git pull
+python -m pip install -e .
+python -m tyremind.monitoring.worker
+```
+
+The standalone worker triggers a heartbeat cycle every 60 seconds; its first trigger occurs after one interval. Press Ctrl+C to stop. Quick checks: `python -m tyremind.monitoring.worker --run-once` or `python -m tyremind.monitoring.worker --interval-seconds 5 --max-cycles 3`. Logs/status live in `data/monitoring/`. Overlapping cycles are prevented within this process. **This step does not generate telemetry or run predictions yet.** See [worker instructions](docs/monitoring_worker.md). The test suite now has 63 tests; the POSIX signal test is skipped on Windows.
