@@ -132,6 +132,23 @@ def assess_risk(evidence,policy):
             'rules':rules,'data_issues':issues}
 
 
+def monitoring_decision(assessment):
+    """Record continuation explicitly; event dispatch remains a later step."""
+    level=assessment['risk_level']
+    if level in ('Normal','Medium'):
+        action='CONTINUE_MONITORING'
+        reason=f'{level} risk: results saved; continue scheduled monitoring without an investigation event.'
+    elif level in ('High','Critical'):
+        action='AWAIT_EVENT_HANDLER'
+        reason=f'{level} risk: retain results for the next event-handling step; no event is created here.'
+    else:
+        action='DATA_REVIEW_REQUIRED'
+        reason='Risk is unclassified because evidence is incomplete/stale; retain issues and continue collecting readings.'
+    return {'next_action':action,'monitoring_continues':1,
+            'data_review_required':int(assessment['data_status']!='complete'),
+            'decision_reason':reason}
+
+
 def canonical_inputs(row):
     return {name:float(row[name]) if finite(row[name]) else None for name in FEATURE_COLUMNS}
 
@@ -169,7 +186,13 @@ def evaluate_risks(database=Path('data/tyremind.db'),config=Path('config/risk_ru
                 evidence_json TEXT NOT NULL,policy_version TEXT NOT NULL,policy_sha256 TEXT NOT NULL,
                 policy_json TEXT NOT NULL,prediction_id TEXT,assessed_at TEXT NOT NULL)''')
             connection.execute('CREATE INDEX IF NOT EXISTS idx_risk_tyre_time ON risk_assessments(tyre_id,timestamp)')
-            rows,inserts=[],0
+            connection.execute('''CREATE TABLE IF NOT EXISTS monitoring_decisions (
+                assessment_id TEXT PRIMARY KEY NOT NULL REFERENCES risk_assessments(assessment_id),
+                next_action TEXT NOT NULL CHECK(next_action IN ('CONTINUE_MONITORING','AWAIT_EVENT_HANDLER','DATA_REVIEW_REQUIRED')),
+                monitoring_continues INTEGER NOT NULL CHECK(monitoring_continues=1),
+                data_review_required INTEGER NOT NULL CHECK(data_review_required IN (0,1)),
+                reason TEXT NOT NULL,recorded_at TEXT NOT NULL)''')
+            rows,inserts,decision_inserts=[],0,0
             for _,feature in features.iterrows():
                 history=raw.loc[(raw.tyre_id==feature.tyre_id)&(raw.parsed_timestamp<=pd.to_datetime(feature.timestamp,utc=True))].sort_values('parsed_timestamp')
                 if history.empty:
@@ -198,12 +221,16 @@ def evaluate_risks(database=Path('data/tyremind.db'),config=Path('config/risk_ru
                         prediction['prediction_id'] if prediction else None,now)
                 cursor=connection.execute('INSERT INTO risk_assessments VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?) ON CONFLICT(assessment_id) DO NOTHING',values)
                 inserts+=cursor.rowcount
+                decision=monitoring_decision(assessment)
+                cursor=connection.execute('INSERT INTO monitoring_decisions VALUES (?,?,?,?,?,?) ON CONFLICT(assessment_id) DO NOTHING',
+                    (identity,decision['next_action'],decision['monitoring_continues'],decision['data_review_required'],decision['decision_reason'],now))
+                decision_inserts+=cursor.rowcount
                 rows.append(dict(assessment_id=identity,tyre_id=feature.tyre_id,truck_id=feature.truck_id,
                                  timestamp=feature.timestamp,feature_as_of=feature.feature_as_of,
                                  risk_level=assessment['risk_level'],data_status=assessment['data_status'],
                                  rules_json=json.dumps(assessment['rules']),data_issues_json=json.dumps(assessment['data_issues']),
                                  policy_version=policy['version'],policy_sha256=policy_hash,
-                                 prediction_id=prediction['prediction_id'] if prediction else None))
+                                 prediction_id=prediction['prediction_id'] if prediction else None,**decision))
             connection.commit()
         except Exception:
             connection.rollback()
@@ -217,7 +244,12 @@ def evaluate_risks(database=Path('data/tyremind.db'),config=Path('config/risk_ru
             'unclassified_rows':int(frame.risk_level.isna().sum()),'data_status_counts':frame.data_status.value_counts().to_dict(),
             'inserted_assessments':inserts,'policy_version':policy['version'],'policy_sha256':policy_hash,
             'wear_model':wear_model,'csv_path':str(output/'latest_risk.csv'),
-            'notice':policy['notice'],'events_created':False}
+            'notice':policy['notice'],'events_created':False,
+            'decision_counts':frame.next_action.value_counts().to_dict(),
+            'inserted_decisions':decision_inserts,
+            'continue_monitoring_rows':int(frame.next_action.eq('CONTINUE_MONITORING').sum()),
+            'awaiting_event_handler_rows':int(frame.next_action.eq('AWAIT_EVENT_HANDLER').sum()),
+            'data_review_rows':int(frame.data_review_required.sum()),'monitoring_continues':True}
     temporary=output/'risk_report.json.tmp'
     temporary.write_text(json.dumps(report,indent=2)+'\n')
     temporary.replace(output/'risk_report.json')
@@ -230,7 +262,10 @@ def run_risk_cycle(source,history,simulator,seed,feature_output,prediction_outpu
     risk=evaluate_risks(source,config,output,models.wear_model,models.hashes)
     return {**cycle,'mode':'risk_levels_ready','risk_counts':risk['risk_counts'],
             'unclassified_risk_rows':risk['unclassified_rows'],'risk_csv':risk['csv_path'],
-            'message':'Risk levels and evidence saved; investigation events and agents are not connected yet.'}
+            'continue_monitoring_rows':risk['continue_monitoring_rows'],
+            'awaiting_event_handler_rows':risk['awaiting_event_handler_rows'],
+            'data_review_rows':risk['data_review_rows'],
+            'message':'Results saved; Normal/Medium continue monitoring. High/Critical await the future event handler.'}
 
 
 def main():
