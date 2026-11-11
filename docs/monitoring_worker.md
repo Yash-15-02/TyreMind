@@ -2,6 +2,8 @@
 
 ## What is implemented
 
+This guide covers Step 1 timer-only mode. Step 2 now generates readings by default; use `--heartbeat-only` for these original scheduler checks. See [live simulator](live_simulator.md).
+
 A separate Python program starts APScheduler 3.x and triggers `run_monitoring_cycle()` every 60 seconds by default. This first step runs a scheduler heartbeat only: it records a successful trigger and explicitly reports zero tyres processed. Telemetry generation, validation/storage, inference and risk events will be connected in later steps. Existing datasets, databases and saved models are unchanged.
 
 The interval applies to one fleet cycle, not a 60-second inspection of one tyre. The planned cycle processes the fleet batch. Scheduler interval is wall-clock time, independent of simulated fleet time, which has not yet been implemented.
@@ -13,7 +15,7 @@ From the cloned repository root, run one command at a time:
 ```powershell
 git pull
 python -m pip install -e .
-python -m tyremind.monitoring.worker
+python -m tyremind.monitoring.worker --heartbeat-only
 ```
 
 Keep the terminal open. The first cycle runs after 60 seconds, then on the interval schedule. Press Ctrl+C to request shutdown; an in-progress cycle is allowed to finish. No browser, dashboard, API key, retraining or GPU is required. Closing the terminal forcibly or shutting down the computer stops the process and may prevent a final status write. This is not an OS service.
@@ -21,13 +23,13 @@ Keep the terminal open. The first cycle runs after 60 seconds, then on the inter
 Quick single-cycle check:
 
 ```powershell
-python -m tyremind.monitoring.worker --run-once
+python -m tyremind.monitoring.worker --heartbeat-only --run-once
 ```
 
 Quick scheduler check (three ticks, then automatic exit):
 
 ```powershell
-python -m tyremind.monitoring.worker --interval-seconds 5 --max-cycles 3
+python -m tyremind.monitoring.worker --heartbeat-only --interval-seconds 5 --max-cycles 3
 ```
 
 These test options do not change the normal 60-second default. Short intervals are for checking the timer, not production settings.
