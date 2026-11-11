@@ -2,6 +2,8 @@
 
 Normal/Medium continuation decisions are now explicitly persisted in `monitoring_decisions`; High/Critical remain pending the later event handler. See [continuation branch](continue_monitoring.md).
 
+The default worker now also routes High/Critical assessments into deduplicated cases/jobs (Step 7). The standalone risk command still only assesses risk and continuation decisions. See [risk events](risk_events.md).
+
 ## Run on Windows
 
 Stop a running worker with Ctrl+C, then run commands individually from the repository root:
