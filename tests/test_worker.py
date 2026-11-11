@@ -74,7 +74,7 @@ class WorkerTests(unittest.TestCase):
 
     def test_real_interval_scheduler_stops_after_two_ticks(self):
         with tempfile.TemporaryDirectory() as directory:
-            result = subprocess.run([sys.executable, '-m', 'tyremind.monitoring.worker',
+            result = subprocess.run([sys.executable, '-m', 'tyremind.monitoring.worker', '--heartbeat-only',
                                      '--interval-seconds', '0.15', '--max-cycles', '2', '--output', directory],
                                     capture_output=True, text=True, timeout=15)
             self.assertEqual(result.returncode, 0, result.stderr)
@@ -86,7 +86,7 @@ class WorkerTests(unittest.TestCase):
     @unittest.skipIf(os.name == 'nt', 'POSIX termination signal test; Windows uses console Ctrl+C')
     def test_shutdown_signal_records_stopped(self):
         with tempfile.TemporaryDirectory() as directory:
-            process = subprocess.Popen([sys.executable, '-m', 'tyremind.monitoring.worker',
+            process = subprocess.Popen([sys.executable, '-m', 'tyremind.monitoring.worker', '--heartbeat-only',
                                         '--interval-seconds', '60', '--output', directory],
                                        stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
             try:
