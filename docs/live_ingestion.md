@@ -1,5 +1,7 @@
 # Phase 2, Step 3: validate new readings and store them in SQLite
 
+The default worker now also refreshes current features after ingestion (Phase 2, Step 4). The standalone ingestion command retains its storage-only behavior. See [current features](current_features.md).
+
 ## Run on Windows
 
 Stop any running worker with Ctrl+C. From the cloned project folder, run commands separately:
