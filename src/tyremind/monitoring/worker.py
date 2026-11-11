@@ -1,4 +1,4 @@
-"""Run a standalone APScheduler heartbeat; telemetry integration comes next."""
+"""Schedule fleet telemetry simulation; later steps add ingestion and inference."""
 import argparse
 import json
 import logging
@@ -153,8 +153,17 @@ def main():
     parser.add_argument('--output', type=Path, default=Path('data/monitoring'))
     parser.add_argument('--run-once', action='store_true', help='Check one cycle immediately, then exit.')
     parser.add_argument('--max-cycles', type=int, help='Stop automatically after this many cycle attempts.')
+    parser.add_argument('--heartbeat-only', action='store_true', help='Run the Step 1 timer check without generating readings.')
+    parser.add_argument('--source-database', type=Path, default=Path('data/tyremind.db'))
+    parser.add_argument('--history', type=Path, default=Path('data/generated'))
+    parser.add_argument('--simulator-output', type=Path, default=Path('data/simulator'))
+    parser.add_argument('--simulation-seed', type=int, default=43)
     args = parser.parse_args()
-    worker = MonitoringWorker(args.interval_seconds, args.output, max_cycles=args.max_cycles)
+    cycle = None
+    if not args.heartbeat_only:
+        from tyremind.monitoring.simulator import generate_next_batch
+        cycle = lambda: generate_next_batch(args.source_database, args.history, args.simulator_output, args.simulation_seed)
+    worker = MonitoringWorker(args.interval_seconds, args.output, cycle=cycle, max_cycles=args.max_cycles)
     try:
         if args.run_once:
             try:
