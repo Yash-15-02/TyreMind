@@ -97,7 +97,8 @@ class SimulatorTests(unittest.TestCase):
         status = json.loads((self.root/'worker/worker_status.json').read_text())
         self.assertEqual(status['state'],'stopped')
         self.assertEqual(status['last_result']['readings_generated'],12)
-        self.assertFalse(status['last_result']['operational_database_updated'])
+        self.assertTrue(status['last_result']['operational_database_updated'])
+        self.assertEqual(status['last_result']['telemetry_inserted'],12)
 
 
 if __name__ == '__main__':
