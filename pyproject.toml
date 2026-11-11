@@ -14,6 +14,7 @@ ml = ["scikit-learn>=1.5,<2", "xgboost>=2,<4", "joblib>=1.4,<2"]
 rag = ["sentence-transformers>=3,<6", "chromadb>=1.5.9,<2"]
 
 [project.scripts]
+tyremind-current-features = "tyremind.monitoring.features:main"
 tyremind-ingest = "tyremind.monitoring.ingest:main"
 tyremind-simulate = "tyremind.monitoring.simulator:main"
 tyremind-worker = "tyremind.monitoring.worker:main"
