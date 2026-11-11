@@ -289,3 +289,13 @@ python -m unittest discover -s tests -v
 ```
 
 Python rules combine current pressure/temperature/trends, measured tread, future tread prediction and IF evidence. Highest severity wins; an IF normal result cannot cancel direct alerts. Policy thresholds live in `config/risk_rules.json` and are explicitly synthetic-demo assumptions. Results/evidence are saved in SQLite `risk_assessments` and `data/monitoring/risk/`. Stale/incomplete evidence is distinguished from Normal. The worker includes risk classification by default; `--prediction-only` stops before it. Full suite: 107 tests. See [risk rules and exact thresholds](docs/risk_rules.md). Investigation events/agents are not connected yet.
+
+## Normal/Medium: save results and continue monitoring
+
+```powershell
+git pull
+python -m tyremind.monitoring.risk
+python -m unittest discover -s tests -v
+```
+
+Normal/Medium assessments now explicitly save `CONTINUE_MONITORING` in SQLite `monitoring_decisions`; the scheduled worker returns normally and continues on its next tick. High/Critical remain `AWAIT_EVENT_HANDLER`; unknown/stale evidence retains data review instead of becoming Normal. Updated CSV/report files are in `data/monitoring/risk/`. No events/agents are started yet. Full suite: 111 tests. See [continuation branch](docs/continue_monitoring.md).
