@@ -1,4 +1,4 @@
-"""Schedule fleet telemetry ingestion and current feature calculation."""
+"""Schedule fleet telemetry, features and saved-model inference."""
 import argparse
 import json
 import logging
@@ -159,11 +159,22 @@ def main():
     parser.add_argument('--simulator-output', type=Path, default=Path('data/simulator'))
     parser.add_argument('--simulation-seed', type=int, default=43)
     parser.add_argument('--feature-output', type=Path, default=Path('data/monitoring/features'))
+    parser.add_argument('--features-only', action='store_true', help='Stop the cycle after feature calculation, without loading models.')
+    parser.add_argument('--wear-model', choices=['random_forest','xgboost'], default='random_forest')
+    parser.add_argument('--wear-artifact', type=Path)
+    parser.add_argument('--anomaly-artifact', type=Path, default=Path('models/anomaly/isolation_forest.joblib'))
+    parser.add_argument('--prediction-output', type=Path, default=Path('data/monitoring/predictions'))
     args = parser.parse_args()
     cycle = None
     if not args.heartbeat_only:
-        from tyremind.monitoring.features import run_feature_cycle
-        cycle = lambda: run_feature_cycle(args.source_database, args.history, args.simulator_output, args.simulation_seed, args.feature_output)
+        if args.features_only:
+            from tyremind.monitoring.features import run_feature_cycle
+            cycle = lambda: run_feature_cycle(args.source_database, args.history, args.simulator_output, args.simulation_seed, args.feature_output)
+        else:
+            from tyremind.monitoring.predict import SavedModels, run_prediction_cycle
+            models = SavedModels(args.wear_model,args.wear_artifact,args.anomaly_artifact)
+            cycle = lambda: run_prediction_cycle(args.source_database,args.history,args.simulator_output,args.simulation_seed,
+                                                  args.feature_output,args.prediction_output,models)
     worker = MonitoringWorker(args.interval_seconds, args.output, cycle=cycle, max_cycles=args.max_cycles)
     try:
         if args.run_once:
