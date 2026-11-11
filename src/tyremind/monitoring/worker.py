@@ -167,6 +167,8 @@ def main():
     parser.add_argument('--prediction-only', action='store_true', help='Stop after saved-model inference, before risk rules.')
     parser.add_argument('--risk-config', type=Path, default=Path('config/risk_rules.json'))
     parser.add_argument('--risk-output', type=Path, default=Path('data/monitoring/risk'))
+    parser.add_argument('--risk-only', action='store_true', help='Stop after risk assessment, before event routing.')
+    parser.add_argument('--event-output', type=Path, default=Path('data/monitoring/events'))
     args = parser.parse_args()
     cycle = None
     if not args.heartbeat_only:
@@ -182,8 +184,18 @@ def main():
             else:
                 from tyremind.monitoring.risk import load_policy, run_risk_cycle
                 load_policy(args.risk_config)
-                cycle = lambda: run_risk_cycle(args.source_database,args.history,args.simulator_output,args.simulation_seed,
-                                                args.feature_output,args.prediction_output,models,args.risk_config,args.risk_output)
+                def cycle():
+                    risk = run_risk_cycle(args.source_database,args.history,args.simulator_output,args.simulation_seed,
+                                           args.feature_output,args.prediction_output,models,args.risk_config,args.risk_output)
+                    if args.risk_only:
+                        return risk
+                    from tyremind.monitoring.events import process_risk_events
+                    events = process_risk_events(args.source_database,args.event_output)
+                    return {**risk,'mode':'risk_events_ready','open_risk_events':events['open_events'],
+                            'events_created':events['events_created'],'events_updated':events['events_updated'],
+                            'investigations_queued':events['investigations_queued'],
+                            'pending_investigations':events['pending_investigations'],
+                            'message':'Events deduplicated and investigations queued; no AI agents executed yet.'}
     worker = MonitoringWorker(args.interval_seconds, args.output, cycle=cycle, max_cycles=args.max_cycles)
     try:
         if args.run_once:
