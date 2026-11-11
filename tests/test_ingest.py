@@ -1,5 +1,6 @@
 """Operational ingestion integrity, quarantine, retry and transaction tests."""
 import copy
+from contextlib import closing
 import json
 import sqlite3
 import tempfile
@@ -25,11 +26,11 @@ class IngestionTests(unittest.TestCase):
         preprocess(self.history,self.root/'processed')
         load_database(self.root/'processed/clean',self.database)
         generate_next_batch(self.database,self.history,self.simulator)
-        with sqlite3.connect(self.simulator/'simulator.db') as c:
+        with closing(sqlite3.connect(self.simulator/'simulator.db')) as c:
             self.raw=json.loads(c.execute('SELECT payload FROM batches WHERE batch_id=1').fetchone()[0])
 
     def count(self,table):
-        with sqlite3.connect(self.database) as c:
+        with closing(sqlite3.connect(self.database)) as c:
             return c.execute(f'SELECT COUNT(*) FROM {table}').fetchone()[0]
 
     def test_pending_backlog_and_repeat_are_duplicate_free(self):
@@ -41,7 +42,7 @@ class IngestionTests(unittest.TestCase):
         self.assertEqual(second['processed_batches'],0)
         self.assertEqual(self.count('telemetry'),384)
         self.assertEqual(self.count('ingestion_batches'),2)
-        with sqlite3.connect(self.database) as c:
+        with closing(sqlite3.connect(self.database)) as c:
             self.assertEqual(c.execute('PRAGMA foreign_key_check').fetchall(),[])
             self.assertNotIn('simulation_truth', [r[0] for r in c.execute("SELECT name FROM sqlite_master WHERE type='table'")])
 
@@ -56,7 +57,7 @@ class IngestionTests(unittest.TestCase):
         self.assertEqual(report['tables']['telemetry']['inserted_rows'],9)
         self.assertEqual(report['tables']['telemetry']['rejected_rows'],3)
         self.assertEqual(self.count('ingestion_rejections'),3)
-        with sqlite3.connect(self.database) as c:
+        with closing(sqlite3.connect(self.database)) as c:
             self.assertEqual(c.execute('SELECT COUNT(*) FROM telemetry WHERE pressure_kpa=100').fetchone()[0],1)
             self.assertIn('broken-sensor', c.execute('SELECT original_json FROM ingestion_rejections WHERE source_row=2').fetchone()[0])
 
@@ -65,7 +66,7 @@ class IngestionTests(unittest.TestCase):
         batch['telemetry'][0]['cumulative_mileage_km']=1
         report=ingest_batch(self.database,'test',batch)
         self.assertEqual(report['tables']['telemetry']['rejected_rows'],1)
-        with sqlite3.connect(self.database) as c:
+        with closing(sqlite3.connect(self.database)) as c:
             self.assertEqual(c.execute('SELECT reasons FROM ingestion_rejections').fetchone()[0],'mileage_below_previous_record')
 
     def test_conflicting_existing_key_cannot_overwrite(self):
@@ -95,7 +96,7 @@ class IngestionTests(unittest.TestCase):
         result=ingest_batch(self.database,'test',batch)
         self.assertEqual(result['tables']['telemetry']['inserted_rows'],12)
         self.assertEqual(result['tables']['telemetry']['rejected_rows'],1)
-        with sqlite3.connect(self.database) as c:
+        with closing(sqlite3.connect(self.database)) as c:
             self.assertEqual(c.execute('SELECT source_row,reasons FROM ingestion_rejections').fetchone(),(14,'exact_duplicate'))
 
     def test_complete_cycle_drains_backlog_before_new_batch(self):
@@ -123,7 +124,7 @@ class IngestionTests(unittest.TestCase):
         bad['telemetry'][0]['cumulative_mileage_km']+=1000
         result=ingest_batch(self.database,'bad',bad)
         self.assertEqual(result['tables']['telemetry']['rejected_rows'],1)
-        with sqlite3.connect(self.database) as c:
+        with closing(sqlite3.connect(self.database)) as c:
             self.assertEqual(c.execute("SELECT COUNT(*) FROM inspections WHERE inspection_id='LIVE-TEST'").fetchone()[0],1)
 
 
