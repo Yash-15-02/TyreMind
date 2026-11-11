@@ -92,7 +92,8 @@ class SimulatorTests(unittest.TestCase):
     def test_real_worker_generates_and_stops(self):
         result = subprocess.run([sys.executable,'-m','tyremind.monitoring.worker','--run-once',
                                  '--source-database',str(self.database),'--history',str(self.history),
-                                 '--simulator-output',str(self.output),'--output',str(self.root/'worker')],
+                                 '--simulator-output',str(self.output),'--output',str(self.root/'worker'),
+                                 '--feature-output',str(self.root/'features')],
                                 capture_output=True,text=True,timeout=20)
         self.assertEqual(result.returncode,0,result.stderr)
         status = json.loads((self.root/'worker/worker_status.json').read_text())
