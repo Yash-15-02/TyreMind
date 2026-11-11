@@ -1,0 +1,18 @@
+{
+  "version": "demo-1.0",
+  "notice": "Configurable synthetic-demo rules; not manufacturer-approved safety or service limits.",
+  "pressure_medium_deviation": 0.10,
+  "pressure_high_deviation": 0.20,
+  "pressure_critical_deviation": 0.30,
+  "temperature_medium_c": 55,
+  "temperature_high_c": 65,
+  "temperature_critical_c": 80,
+  "observed_tread_high_mm": 3.0,
+  "observed_tread_critical_mm": 1.6,
+  "predicted_tread_high_mm": 3.0,
+  "max_inspection_age_days": 14,
+  "pressure_decline_steps": 3,
+  "pressure_decline_total_kpa": 15,
+  "max_trend_span_days": 7,
+  "load_medium_ratio": 1.10
+}
