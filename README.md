@@ -233,3 +233,15 @@ python -m tyremind.monitoring.worker
 ```
 
 The standalone worker triggers a heartbeat cycle every 60 seconds; its first trigger occurs after one interval. Press Ctrl+C to stop. Quick checks: `python -m tyremind.monitoring.worker --run-once` or `python -m tyremind.monitoring.worker --interval-seconds 5 --max-cycles 3`. Logs/status live in `data/monitoring/`. Overlapping cycles are prevented within this process. **This step does not generate telemetry or run predictions yet.** See [worker instructions](docs/monitoring_worker.md). The test suite now has 63 tests; the POSIX signal test is skipped on Windows.
+
+## Phase 2, Step 2: continue historical readings
+
+```powershell
+git pull
+python -m pip install -e .
+python -m tyremind.monitoring.worker --run-once
+```
+
+The default worker now generates one further daily batch for the existing fleet per cycle. It starts from historical mileage, hidden tread and fault scenarios, then checkpoints its state for restart continuity. Default first batch: 120 readings on June 30, 2026. Raw CSV batches and private simulator state are saved in `data/simulator/`; operational storage/inference are not connected yet. For timer-only checks use `--heartbeat-only`.
+
+For normal automatic generation, run `python -m tyremind.monitoring.worker` and press Ctrl+C to stop. The full suite has 70 tests. Read [simulation continuation, commands and output details](docs/live_simulator.md).
