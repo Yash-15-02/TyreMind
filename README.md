@@ -245,3 +245,14 @@ python -m tyremind.monitoring.worker --run-once
 The default worker now generates one further daily batch for the existing fleet per cycle. It starts from historical mileage, hidden tread and fault scenarios, then checkpoints its state for restart continuity. Default first batch: 120 readings on June 30, 2026. Raw CSV batches and private simulator state are saved in `data/simulator/`; operational storage/inference are not connected yet. For timer-only checks use `--heartbeat-only`.
 
 For normal automatic generation, run `python -m tyremind.monitoring.worker` and press Ctrl+C to stop. The full suite has 70 tests. Read [simulation continuation, commands and output details](docs/live_simulator.md).
+
+## Phase 2, Step 3: validate and store live batches
+
+```powershell
+git pull
+python -m pip install -e .
+python -m tyremind.monitoring.ingest
+python -m tyremind.monitoring.worker --run-once
+```
+
+The first command after installation drains existing generated batches without making new readings. The updated worker then generates, validates and stores further telemetry/inspections in `data/tyremind.db`, with no imputation. Invalid rows retain their original values/reasons in `ingestion_rejections`; `ingestion_batches` protects against repeat imports. The full suite has 78 tests. Read [live ingestion instructions](docs/live_ingestion.md). Saved-model inference and risk decisions are not connected yet.
