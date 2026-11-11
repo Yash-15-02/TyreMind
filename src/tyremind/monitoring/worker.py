@@ -1,4 +1,4 @@
-"""Schedule fleet telemetry generation, validation and SQLite ingestion."""
+"""Schedule fleet telemetry ingestion and current feature calculation."""
 import argparse
 import json
 import logging
@@ -158,11 +158,12 @@ def main():
     parser.add_argument('--history', type=Path, default=Path('data/generated'))
     parser.add_argument('--simulator-output', type=Path, default=Path('data/simulator'))
     parser.add_argument('--simulation-seed', type=int, default=43)
+    parser.add_argument('--feature-output', type=Path, default=Path('data/monitoring/features'))
     args = parser.parse_args()
     cycle = None
     if not args.heartbeat_only:
-        from tyremind.monitoring.ingest import run_ingestion_cycle
-        cycle = lambda: run_ingestion_cycle(args.source_database, args.history, args.simulator_output, args.simulation_seed)
+        from tyremind.monitoring.features import run_feature_cycle
+        cycle = lambda: run_feature_cycle(args.source_database, args.history, args.simulator_output, args.simulation_seed, args.feature_output)
     worker = MonitoringWorker(args.interval_seconds, args.output, cycle=cycle, max_cycles=args.max_cycles)
     try:
         if args.run_once:
