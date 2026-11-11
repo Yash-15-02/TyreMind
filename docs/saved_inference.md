@@ -1,5 +1,7 @@
 # Phase 2, Step 5: run saved RF and IF models
 
+The default worker now also evaluates risk rules after inference (Step 6). Use `--prediction-only` for inference without risk classification; the standalone prediction command is unchanged. See [risk rules](risk_rules.md).
+
 ## Run on Windows
 
 Stop the worker with Ctrl+C before pulling. From the cloned project root:
