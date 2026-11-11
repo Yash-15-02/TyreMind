@@ -1,4 +1,4 @@
-"""Schedule fleet telemetry, features and saved-model inference."""
+"""Schedule fleet telemetry, model inference and deterministic risk assessment."""
 import argparse
 import json
 import logging
@@ -164,6 +164,9 @@ def main():
     parser.add_argument('--wear-artifact', type=Path)
     parser.add_argument('--anomaly-artifact', type=Path, default=Path('models/anomaly/isolation_forest.joblib'))
     parser.add_argument('--prediction-output', type=Path, default=Path('data/monitoring/predictions'))
+    parser.add_argument('--prediction-only', action='store_true', help='Stop after saved-model inference, before risk rules.')
+    parser.add_argument('--risk-config', type=Path, default=Path('config/risk_rules.json'))
+    parser.add_argument('--risk-output', type=Path, default=Path('data/monitoring/risk'))
     args = parser.parse_args()
     cycle = None
     if not args.heartbeat_only:
@@ -173,8 +176,14 @@ def main():
         else:
             from tyremind.monitoring.predict import SavedModels, run_prediction_cycle
             models = SavedModels(args.wear_model,args.wear_artifact,args.anomaly_artifact)
-            cycle = lambda: run_prediction_cycle(args.source_database,args.history,args.simulator_output,args.simulation_seed,
-                                                  args.feature_output,args.prediction_output,models)
+            if args.prediction_only:
+                cycle = lambda: run_prediction_cycle(args.source_database,args.history,args.simulator_output,args.simulation_seed,
+                                                      args.feature_output,args.prediction_output,models)
+            else:
+                from tyremind.monitoring.risk import load_policy, run_risk_cycle
+                load_policy(args.risk_config)
+                cycle = lambda: run_risk_cycle(args.source_database,args.history,args.simulator_output,args.simulation_seed,
+                                                args.feature_output,args.prediction_output,models,args.risk_config,args.risk_output)
     worker = MonitoringWorker(args.interval_seconds, args.output, cycle=cycle, max_cycles=args.max_cycles)
     try:
         if args.run_once:
