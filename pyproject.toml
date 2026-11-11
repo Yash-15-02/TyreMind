@@ -7,13 +7,14 @@ name = "tyremind-ai"
 version = "0.1.0"
 description = "Synthetic tyre monitoring proof of concept"
 requires-python = ">=3.10"
-dependencies = ["numpy>=1.24,<3", "pandas>=2,<3", "pypdf>=5,<7", "fonttools>=4,<5"]
+dependencies = ["numpy>=1.24,<3", "pandas>=2,<3", "pypdf>=5,<7", "fonttools>=4,<5", "APScheduler>=3.10,<4"]
 
 [project.optional-dependencies]
 ml = ["scikit-learn>=1.5,<2", "xgboost>=2,<4", "joblib>=1.4,<2"]
 rag = ["sentence-transformers>=3,<6", "chromadb>=1.5.9,<2"]
 
 [project.scripts]
+tyremind-worker = "tyremind.monitoring.worker:main"
 tyremind-finalize-models = "tyremind.ml.finalize:main"
 tyremind-train-anomaly = "tyremind.ml.anomaly:main"
 tyremind-train-wear = "tyremind.ml.train:main"
