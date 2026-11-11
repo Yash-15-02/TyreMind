@@ -2,6 +2,8 @@
 
 ## What happens
 
+Step 3 now connects validation/operational ingestion to the default worker. This guide describes standalone simulation/raw output; see [live ingestion](live_ingestion.md) for the current worker behavior.
+
 The worker now continues the existing simulated fleet, advancing one simulated day per cycle. It keeps truck/tyre identities, reference pressures, accumulated mileage, remaining hidden tread, wear coefficients and fault scenario timelines. It adds a new day's distance and operating readings with small random variation, then calculates further tread loss using the Phase 1 demonstration equation. This is simulated evidence, not readings predicted by the ML models.
 
 For the default history ending June 29, 2026, batch 1 is June 30 and batch 2 July 1. Each contains 120 readings. Every 60 wall-clock seconds advances one simulated day. Short test intervals advance simulated days faster; there is no claim these represent minute-frequency real sensors.
