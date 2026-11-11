@@ -1,5 +1,7 @@
 # Phase 2, Step 4: current feature calculation
 
+The default worker now includes saved-model inference (Step 5). Use `--features-only` to stop after this guide's feature stage; the standalone feature command remains unchanged. See [saved inference](saved_inference.md).
+
 ## Run on Windows
 
 Stop a running worker with Ctrl+C before updating. From the cloned project folder, run commands individually:
