@@ -256,3 +256,14 @@ python -m tyremind.monitoring.worker --run-once
 ```
 
 The first command after installation drains existing generated batches without making new readings. The updated worker then generates, validates and stores further telemetry/inspections in `data/tyremind.db`, with no imputation. Invalid rows retain their original values/reasons in `ingestion_rejections`; `ingestion_batches` protects against repeat imports. The full suite has 78 tests. Read [live ingestion instructions](docs/live_ingestion.md). Saved-model inference and risk decisions are not connected yet.
+
+## Phase 2, Step 4: refresh current tyre features
+
+```powershell
+git pull
+python -m pip install -e .
+python -m tyremind.monitoring.features
+python -m unittest discover -s tests -v
+```
+
+This calculates the latest 19-feature row per tyre from operational history using the original training feature builder. Output is stored in SQLite's `current_features` table and `data/monitoring/features/`; historical training CSVs remain unchanged. Missing history remains missing and older tyre readings are explicitly marked stale. The default worker now generates, validates, ingests and refreshes features each cycle. Full suite: 85 tests. See [current feature instructions](docs/current_features.md). Inference remains the next step.
