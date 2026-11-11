@@ -299,3 +299,14 @@ python -m unittest discover -s tests -v
 ```
 
 Normal/Medium assessments now explicitly save `CONTINUE_MONITORING` in SQLite `monitoring_decisions`; the scheduled worker returns normally and continues on its next tick. High/Critical remain `AWAIT_EVENT_HANDLER`; unknown/stale evidence retains data review instead of becoming Normal. Updated CSV/report files are in `data/monitoring/risk/`. No events/agents are started yet. Full suite: 111 tests. See [continuation branch](docs/continue_monitoring.md).
+
+## Phase 2, Step 7: deduplicated risk events and investigation queue
+
+```powershell
+git pull
+python -m pip install -e ".[ml]"
+python -m tyremind.monitoring.events
+python -m unittest discover -s tests -v
+```
+
+High/Critical creates or updates one OPEN case per tyre and queues one active investigation. Repeated evidence is attached once. Pending jobs coalesce updates; new material evidence during RUNNING can request one follow-up. Normal recovery requires human review to resolve a case. The default worker includes event routing; `--risk-only` preserves its prior stage. Exports: `data/monitoring/events/`. Full suite: 124 tests. Read [case lifecycle and queue instructions](docs/risk_events.md). LangGraph execution remains Phase 3; jobs are queued, not automatically investigated yet.
