@@ -24,7 +24,7 @@ SCHEMAS = {
 }
 
 
-def validate_table(name, raw, parents):
+def validate_table(name, raw, parents, *, include_source_rows=False):
     """Return clean rows, original rejected rows with reasons, and counts."""
     columns, key, numeric = SCHEMAS[name]
     missing = sorted(set(columns) - set(raw.columns))
@@ -94,6 +94,8 @@ def validate_table(name, raw, parents):
     sort_columns = [c for c in ('tyre_id', 'timestamp') if c in clean.columns]
     if sort_columns:
         clean = clean.sort_values(sort_columns)
+    if include_source_rows:
+        clean['_source_row'] = clean.index + 2
     rejected = original.loc[~accepted].copy()
     rejected.insert(0, 'source_row', rejected.index + 2)  # CSV header is row 1
     rejected['rejection_reasons'] = [';'.join(reasons[i]) for i in rejected.index]
