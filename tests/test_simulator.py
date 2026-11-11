@@ -90,7 +90,7 @@ class SimulatorTests(unittest.TestCase):
             self.batch()
 
     def test_real_worker_generates_and_stops(self):
-        result = subprocess.run([sys.executable,'-m','tyremind.monitoring.worker','--run-once',
+        result = subprocess.run([sys.executable,'-m','tyremind.monitoring.worker','--run-once','--features-only',
                                  '--source-database',str(self.database),'--history',str(self.history),
                                  '--simulator-output',str(self.output),'--output',str(self.root/'worker'),
                                  '--feature-output',str(self.root/'features')],
