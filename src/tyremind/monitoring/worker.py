@@ -169,6 +169,8 @@ def main():
     parser.add_argument('--risk-output', type=Path, default=Path('data/monitoring/risk'))
     parser.add_argument('--risk-only', action='store_true', help='Stop after risk assessment, before event routing.')
     parser.add_argument('--event-output', type=Path, default=Path('data/monitoring/events'))
+    parser.add_argument('--events-only', action='store_true', help='Stop after queueing investigations, before Phase 3 handoff export.')
+    parser.add_argument('--phase3-output', type=Path, default=Path('data/phase3'))
     args = parser.parse_args()
     cycle = None
     if not args.heartbeat_only:
@@ -191,11 +193,18 @@ def main():
                         return risk
                     from tyremind.monitoring.events import process_risk_events
                     events = process_risk_events(args.source_database,args.event_output)
-                    return {**risk,'mode':'risk_events_ready','open_risk_events':events['open_events'],
+                    event_result = {**risk,'mode':'risk_events_ready','open_risk_events':events['open_events'],
                             'events_created':events['events_created'],'events_updated':events['events_updated'],
                             'investigations_queued':events['investigations_queued'],
                             'pending_investigations':events['pending_investigations'],
                             'message':'Events deduplicated and investigations queued; no AI agents executed yet.'}
+                    if args.events_only:
+                        return event_result
+                    from tyremind.monitoring.handoff import prepare_phase3_handoffs
+                    handoff = prepare_phase3_handoffs(args.source_database,args.phase3_output)
+                    return {**event_result,'mode':'phase3_handoff_ready','phase3_ready_handoffs':handoff['ready_handoffs'],
+                            'phase3_inbox':handoff['inbox_path'],
+                            'message':'Actionable events prepared for Phase 3; agents remain unstarted.'}
     worker = MonitoringWorker(args.interval_seconds, args.output, cycle=cycle, max_cycles=args.max_cycles)
     try:
         if args.run_once:
