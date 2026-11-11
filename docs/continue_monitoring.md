@@ -1,5 +1,7 @@
 # Normal/Medium branch: save results and continue monitoring
 
+The event handler is now implemented for the High/Critical branch; see [risk events](risk_events.md). This guide describes the original continuation decision.
+
 The condition after risk assessment is now explicitly recorded:
 
 ```text
