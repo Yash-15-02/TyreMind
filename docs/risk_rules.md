@@ -1,5 +1,7 @@
 # Phase 2, Step 6: deterministic risk rules
 
+Normal/Medium continuation decisions are now explicitly persisted in `monitoring_decisions`; High/Critical remain pending the later event handler. See [continuation branch](continue_monitoring.md).
+
 ## Run on Windows
 
 Stop a running worker with Ctrl+C, then run commands individually from the repository root:
