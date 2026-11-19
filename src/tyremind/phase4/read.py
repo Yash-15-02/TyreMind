@@ -29,6 +29,9 @@ def read_results(database=Path('data/tyremind.db'), tyre_id=None):
             for field in ('rules', 'data_issues', 'evidence'):
                 assessment[field] = json.loads(assessment.pop(field + '_json'))
             monitoring.append(assessment)
+        reviews = {}
+        if 'fleet_manager_reviews' in tables:
+            reviews = {r['investigation_id']: dict(r) for r in connection.execute('SELECT * FROM fleet_manager_reviews')}
         investigations = []
         if 'phase4_inbox' in tables:
             for row in connection.execute('SELECT * FROM phase4_inbox ORDER BY published_at,investigation_id'):
@@ -40,7 +43,8 @@ def read_results(database=Path('data/tyremind.db'), tyre_id=None):
                     raise ValueError('Phase 4 message identity mismatch.')
                 if tyre_id is None or outcome['tyre_id'] == tyre_id:
                     investigations.append(dict(message_type=row['message_type'], inbox_status=row['status'],
-                                               published_at=row['published_at'], outcome=outcome))
+                                               published_at=row['published_at'], payload_sha256=row['payload_sha256'],
+                                               review=reviews.get(row['investigation_id']), outcome=outcome))
     return dict(monitoring_count=len(monitoring), investigation_count=len(investigations),
                 monitoring=monitoring, investigations=investigations)
 
