@@ -1,344 +1,116 @@
 # TyreMind AI
 
-Automated tyre monitoring proof of concept. **Implemented: Phase 1 data/models/RAG preparation, Phase 2 monitoring and Phase 3 event reception plus initial LangGraph supervisor routing.** Specialist analysis agents and the dashboard remain later steps.
+TyreMind monitors a simulated truck fleet for tyre pressure, temperature, load and wear. A monitoring worker scores each tyre. High or Critical readings can open investigations. Three LLM agents use the saved measurements, model results and manufacturer manual passages to draft a health assessment, possible causes and a maintenance plan. A fleet manager reviews eligible work orders in a local Streamlit dashboard.
 
-## Run
+**Already ran TyreMind?** From the cloned project folder containing `pyproject.toml`, use the Python environment where you installed TyreMind:
 
-Python 3.10 or newer:
+```powershell
+git pull
+python -m streamlit run .\src\tyremind\phase4\dashboard.py
+```
 
-```bash
+Open the **Local URL** printed in the terminal (usually http://localhost:8501). This reads your existing SQLite database. For a new clone, build the local data first using the steps below.
+
+## 1. Set up a new clone
+
+These commands use Windows PowerShell, Git and Python 3.12. Run them one at a time. Keep the repository root as your working directory so the commands share the same data and model paths.
+
+```powershell
+git clone https://github.com/Yash-15-02/TyreMind.git
+cd TyreMind
 python -m venv .venv
-# Linux/macOS:
-source .venv/bin/activate
-# Windows PowerShell alternative: .venv\Scripts\Activate.ps1
-python -m pip install -e .
+.\.venv\Scripts\Activate.ps1
+python -m pip install -e ".[ml,rag,agents,llm,dashboard]"
+python -m pip check
+```
+
+On macOS or Linux, activate with `source .venv/bin/activate`. The first installation and model downloads require internet access. Generated data, fitted models and the local vector index are created on your machine.
+
+## 2. Build the fleet data, models and manual index
+
+Run these once for the default fleet of 20 trucks and 120 tyres. The generator creates 180 days of synthetic history. The training commands use time- and truck-based splits. Random Forest forecasts tread depth after another 5,000 km and Isolation Forest scores unusual operating patterns.
+
+```powershell
 tyremind-generate
+tyremind-preprocess
+tyremind-load
+tyremind-features
+tyremind-split
+tyremind-train-wear
+tyremind-train-anomaly
+tyremind-finalize-models
 ```
 
-Without installing the package, if NumPy and Pandas are already available:
+Build the reference library for investigations. These commands download the enabled manuals, select and split passages, embed them and save them in local ChromaDB. Page references travel with each passage.
 
-```bash
-PYTHONPATH=src python -m tyremind.data.generate
+```powershell
+tyremind-collect-docs
+tyremind-chunk-docs
+tyremind-embed-docs
+tyremind-store-docs
 ```
 
-Defaults: 20 trucks, six positions each, 180 days starting 2026-01-01 UTC, seed 42. This produces 21,600 daily telemetry records. The date is fixed for reproducibility, not taken from the current day.
+## 3. Run monitoring and open the dashboard
 
-```bash
-tyremind-generate --trucks 4 --days 60 --seed 7 --start-date 2026-01-01 --output data/custom
+```powershell
+tyremind-worker --run-once
+python -m streamlit run src/tyremind/phase4/dashboard.py
 ```
 
-The same arguments reproduce the same data within the same dependency environment. Rerunning replaces files in the selected output directory. Generated datasets are excluded from Git by default at `data/generated/`; exclude any custom output directory before committing.
+One cycle adds simulated readings, validates them, updates features, runs the saved models and assigns risk levels. Open **Fleet monitoring** to select a truck and tyre, view trends and inspect the rules behind its risk level.
 
-## Generated files
+For continuous updates, run `tyremind-worker` in a second terminal from the same repository and activated environment. It schedules a cycle every 60 seconds. Use **Refresh from SQLite** in the dashboard to see the latest saved data. Ctrl+C stops the process in the selected terminal.
 
-| File | Contents |
+## 4. Investigate an alert with local Ollama
+
+Install and start [Ollama](https://ollama.com/download). In an activated project terminal, download the model once and set the LiteLLM model for this shell:
+
+```powershell
+ollama pull llama3.2:3b
+$env:TYREMIND_LLM_MODEL = "ollama_chat/llama3.2:3b"
+```
+
+On macOS or Linux use `export TYREMIND_LLM_MODEL="ollama_chat/llama3.2:3b"`. This local setup requires no provider API key.
+
+```powershell
+python -m tyremind.agents.validate
+```
+
+This command runs the investigation through validation, reusing any saved steps. It receives an actionable event, routes it through the LangGraph supervisor, loads the tyre history and ML evidence, and runs the health, root-cause and maintenance agents with retrieval where needed. Local generation can take several minutes. If the result is `NO_WORK`, run another monitoring cycle. If it is `AWAITING_DATA_REVIEW`, the supervisor has flagged the evidence for review.
+
+When validation returns an **investigation_id** and a validation decision, paste that ID at the prompt below:
+
+```powershell
+$investigationId = Read-Host "Investigation ID from validation"
+python -m tyremind.agents.finalize $investigationId
+```
+
+Finalization publishes the result to the Phase 4 inbox. A passing draft becomes available for manager review. A failed draft appears with its validation findings and the work order is withheld. Both are valid workflow outcomes.
+
+## 5. Review work and evaluate results
+
+| Dashboard tab | What you can do |
 |---|---|
-| `trucks.csv` | Vehicle identities |
-| `tyres.csv` | Tyre identities, installation, position, reference pressure and initial tread |
-| `telemetry.csv` | Daily pressure (kPa), temperature (°C), distance and cumulative mileage (km), load ratio |
-| `inspections.csv` | Noisy measured tread depth (mm), every 14 days and at the final observation; also at repair |
-| `maintenance_events.csv` | Simulated leak repairs and reinflation |
-| `evaluation_labels.csv` | Assigned scenario, active flags and simulator true tread; evaluation only, never ML inputs |
-| `manifest.json` | Configuration, generator version and row counts |
+| Fleet monitoring | Explore tyre measurements, risk history, model results and cited findings. |
+| Investigation inbox | Review a published investigation. Approve an eligible draft or reject it with a reason. |
+| Technician work orders | Select a manager-approved order, record actual findings and authorized maintenance, then mark completion or follow-up. |
+| Evaluation | Evaluate alerts against simulated faults, compare mature forecasts with simulated tread, and save improvement proposals based on the results and feedback. |
 
-See [simulation assumptions](docs/simulation.md). No real fleet data, credentials or LLM API access are required.
-
-## Checks
-
-```bash
-PYTHONPATH=src python -m unittest discover -s tests -v
-```
-
-Tests check reproducibility, identities, mileage, shared truck loads, declining tread, leaks, elevated temperatures and repair recovery.
-
-## GitHub
-
-Repository: https://github.com/Yash-15-02/TyreMind
-
-Download with **Code → Download ZIP**, extract it, then follow the Run instructions above. Source and documentation are versioned; regenerate the full dataset locally with `tyremind-generate`. A small preview is available in `data/sample/`.
-
-## Step 2: validate and preprocess (Windows, macOS or Linux)
-
-From the folder containing `pyproject.toml`:
-
-```bash
-python -m pip install -e .
-python -m tyremind.data.generate
-python -m tyremind.data.preprocess
-python -m unittest discover -s tests -v
-```
-
-If you already generated the historical data, skip the generator command. The preprocessing command reads `data/generated/` and writes `data/processed/clean/`, `data/processed/rejected/` and `data/processed/validation_report.json`. It never modifies the input CSVs. Rerunning replaces the processed outputs.
-
-Custom directories:
-
-```bash
-python -m tyremind.data.preprocess --input data/generated --output data/processed
-```
-
-No missing readings are imputed. Missing or invalid required values are quarantined with their original source values and reasons. Exact normalized duplicates retain one row; conflicting identities/timestamps quarantine the entire conflicting group. Known fault readings are preserved: low pressure or high temperature alone is not a data-quality rejection. No certified safety limits are applied.
-
-Timestamps become UTC and numeric values are explicitly converted. Checks include finite numbers, nonnegative distance/load/tread, positive reference pressure, known truck/tyre relationships, installation dates and nondecreasing mileage. This version assumes one installation per tyre and one tyre per vehicle position, matching Step 1. Tyre replacement lifecycle support is future work.
-
-A missing required column or missing input file stops processing before any new output is written; existing output from an earlier successful run can remain. Rejected rows have `source_row` (CSV header is row 1) and `rejection_reasons`. A row may have several reasons. Additional columns are reported and excluded from clean output. Simulation evaluation labels are intentionally excluded from operational preprocessing and remain in the original generated directory.
-
-Expected default result: all 21,600 telemetry rows accepted and zero rejected across the five operational tables. Rejected CSVs still contain headers when empty. The full test suite has 10 tests, including deliberately corrupted temporary inputs; these tests do not alter your dataset.
-
-## Step 3: store clean records in SQLite
-
-Update your cloned repository and install the new command:
-
-```bash
-git pull
-python -m pip install -e .
-python -m tyremind.database.load
-```
-
-This reads the five CSVs in `data/processed/clean/`. If they do not exist yet, run the generation and preprocessing commands from Steps 1–2 first.
-
-The loader creates `data/tyremind.db` using Python's built-in `sqlite3` (no extra dependency or database server). It creates trucks, tyres, telemetry, inspections and maintenance_events tables, primary and foreign keys, nonnegative-value constraints and query indexes. All writes are inside one transaction. It revalidates input before importing; foreign keys are explicitly enabled on its connection. Every future database connection must also enable foreign keys.
-
-```bash
-python -m tyremind.database.load --input data/processed/clean --database data/tyremind.db
-python -m unittest discover -s tests -v
-```
-
-Expected first import: 20 trucks, 120 tyres, 21,600 telemetry records, 1,699 inspections and 20 maintenance events. Importing identical records again inserts zero rows. Existing keys with changed values raise an error and roll back all writes instead of silently overwriting history. Existing records absent from the input are retained. This loader is for complete cleaned historical exports; incremental live ingestion and replacement lifecycles will be implemented separately.
-
-The printed report includes input, inserted, unchanged and total counts for each table. Database row counts and foreign keys are checked before commit. The complete suite now has 14 tests, including persistence, repeat imports, constraint enforcement and rollback. Generated database files are excluded from Git.
-
-To check the stored telemetry count without installing any SQLite extension:
-
-```bash
-python -c "import sqlite3; c=sqlite3.connect('data/tyremind.db'); print(c.execute('SELECT COUNT(*) FROM telemetry').fetchone()[0]); c.close()"
-```
-
-Expected: `21600`. Database schema changes will need migrations in future steps; this version only initializes new tables and does not migrate existing schemas.
-
-## Step 4: point-in-time feature engineering
-
-From the cloned project folder, run each command separately:
-
-```bash
-git pull
-python -m pip install -e .
-python -m tyremind.features.build
-python -m unittest discover -s tests -v
-```
-
-Requires the Step 3 database. If starting fresh, run generation, preprocessing and database loading first. Step 4 opens the database read-only and exports `data/features/tyre_features.csv` plus `data/features/feature_report.json`. Default output: 21,600 rows, 120 tyres and 19 numeric features, plus identity/timestamp columns. It does not modify the database or train any models. The full suite now contains 20 tests.
-
-See [feature definitions](docs/features.md) for formulas, availability assumptions and missing-history handling. No PCA, correlation filtering or imputation is performed. Model-specific feature selection and train-only preprocessing belong to later training steps.
-
-## Step 5: prepare targets and split by time and truck
-
-From the cloned folder, run these commands one at a time:
-
-```bash
-git pull
-python -m pip install -e .
-python -m tyremind.ml.split
-python -m unittest discover -s tests -v
-```
-
-Requires Step 4's `data/features/tyre_features.csv` and Step 1's matching `data/generated/evaluation_labels.csv`. Do not mix files generated with different settings/seeds. The command prepares synthetic tread-depth targets at exactly another 5,000 km and creates training, validation and final testing datasets. No model is trained, and no imputation/scaling is fitted. The suite now contains 26 tests.
-
-Results are in `data/splits/`: `train.csv`, `validation_seen.csv`, `validation_unseen.csv`, `test_seen.csv`, `test_unseen.csv`, `excluded.csv`, and `split_report.json`. See [split design](docs/splits.md) for boundaries, counts, exclusions and target definitions. Output files are regenerated on rerun and excluded from Git.
-
-## Collect technical documents for RAG
-
-Three manufacturer reference PDFs are enabled and download-verified; FMCSA is disabled at the user's request. To collect them locally:
-
-```bash
-git pull
-python -m pip install -e .
-python -m tyremind.rag.collect
-python -m unittest discover -s tests -v
-```
-
-Expected collection summary: `Downloaded 3; failed 0.` Output: `data/knowledge/raw/` with PDFs and a collection manifest. The source catalog and usage notes are in [knowledge/README.md](knowledge/README.md) and [knowledge/sources.json](knowledge/sources.json). Publisher originals are not committed to Git. No embeddings or ChromaDB index are built yet. The complete test suite now has 33 tests.
-
-## Split technical text and preserve source references
-
-```bash
-git pull
-python -m pip install -e .
-python -m tyremind.rag.chunk
-python -m unittest discover -s tests -v
-```
-
-Requires the three manufacturer PDFs downloaded earlier. Output: `data/knowledge/processed/pages.jsonl`, `chunks.jsonl` and `chunk_report.json`. The default run extracts 224 pages and produces 82 selected passages. Each passage preserves its title, publisher, edition, URL, PDF page, section, file checksum and text offsets. Full source text remains local, outside Git. FMCSA is skipped; unverified inflation tables stay outside retrieval chunks. Read [the chunking guide](docs/chunking.md) for page selection and limitations. No embeddings or vector index exist yet.
-
-## Generate embeddings
+You can also inspect results in PowerShell:
 
 ```powershell
-git pull
-python -m pip install -e ".[rag]"
-python -m tyremind.rag.embed
+python -m tyremind.phase4.read --tyre-id TYR-0047
+python -m tyremind.phase4.history
+python -m tyremind.phase4.evaluate
+python -m tyremind.phase4.improvements
+```
+
+The operational database is `data/tyremind.db`. The simulator keeps its own state in `data/simulator/simulator.db`. The manual index lives in `data/knowledge/chroma/`, and Phase 4 inbox exports are under `data/phase4/inbox/`. Evaluation uses synthetic outcomes. Forecast errors become available when enough later mileage has accumulated.
+
+## Tests and design notes
+
+```powershell
 python -m unittest discover -s tests -v
 ```
 
-This encodes the existing source-linked passages locally with sentence-transformers/all-MiniLM-L6-v2. The first run downloads model weights; no API key or GPU is needed. Default result: 82 vectors with 384 values each, saved alongside source metadata under `data/knowledge/embeddings/`. Token-limit checks avoid silent passage truncation. The full suite has 38 tests. See [embedding instructions](docs/embeddings.md). ChromaDB indexing is the next step.
-
-## Store embeddings in local ChromaDB
-
-```powershell
-git pull
-python -m pip install -e ".[rag]"
-python -m tyremind.rag.store
-python -m unittest discover -s tests -v
-```
-
-No ChromaDB account/API key is needed. The importer reuses your existing embeddings and saves 82 passage/vector/source records in `data/knowledge/chroma/`. Rerunning the same import adds zero duplicates. `active_index.json` identifies the current verified collection. All 42 tests pass with the optional dependencies installed. See [ChromaDB instructions](docs/chromadb.md). General retrieval and agent tools remain later work.
-
-## Train and compare Random Forest and XGBoost
-
-```powershell
-git pull
-python -m pip install -e ".[ml]"
-python -m tyremind.ml.train
-python -m unittest discover -s tests -v
-```
-
-This compares three configurations per model with three purged time/group folds, then saves both fitted wear-prediction pipelines and metrics in `models/wear/`. No final-test data is used for selection. Real measured results: XGBoost CV MAE 0.1999 mm; Random Forest 0.2056 mm; the simpler wear-rate baseline performs better at 0.1826 mm. These are synthetic-data results. Read [training details](docs/wear_training.md) and [measured comparison](docs/wear_model_results.md). The full suite has 48 tests with ML and RAG dependencies installed. Isolation Forest is implemented in the anomaly-detection section below.
-
-## Train Isolation Forest anomaly detection
-
-```powershell
-git pull
-python -m pip install -e ".[ml]"
-python -m tyremind.ml.anomaly
-python -m unittest discover -s tests -v
-```
-
-The model fits seven operating/wear features on normal-reference history, calibrates its threshold using validation data only, and reports precision/recall/F1/F2, false-alert rates and held-out-truck performance. Saved pipeline and reports are in `models/anomaly/`. All 55 tests pass with optional dependencies installed. **Measured held-out recall is only 7.72% at the selected threshold; this experimental model must not be the sole alert gate.** See [design, commands and measured results](docs/isolation_forest.md). This does not mark worn-out tyres or implement the scheduled risk engine.
-
-## Final check: reload, evaluate and inventory saved models
-
-```powershell
-git pull
-python -m pip install -e ".[ml]"
-python -m tyremind.ml.finalize
-python -m unittest discover -s tests -v
-```
-
-Requires both training commands to have completed locally. This command reloads the three saved models, verifies unchanged input exports and reproduces their recorded held-out metrics. It does not retrain or retune. Expected: 3 verified models; outputs in `models/evaluation/`. The complete test suite now has 57 tests with optional dependencies installed. See [final model inventory and commands](docs/model_finalization.md).
-
-## Phase 2, Step 1: 60-second scheduler worker
-
-```powershell
-git pull
-python -m pip install -e .
-python -m tyremind.monitoring.worker
-```
-
-The standalone worker triggers a heartbeat cycle every 60 seconds; its first trigger occurs after one interval. Press Ctrl+C to stop. Quick checks: `python -m tyremind.monitoring.worker --run-once` or `python -m tyremind.monitoring.worker --interval-seconds 5 --max-cycles 3`. Logs/status live in `data/monitoring/`. Overlapping cycles are prevented within this process. **This step does not generate telemetry or run predictions yet.** See [worker instructions](docs/monitoring_worker.md). The test suite now has 63 tests; the POSIX signal test is skipped on Windows.
-
-## Phase 2, Step 2: continue historical readings
-
-```powershell
-git pull
-python -m pip install -e .
-python -m tyremind.monitoring.worker --run-once
-```
-
-The default worker now generates one further daily batch for the existing fleet per cycle. It starts from historical mileage, hidden tread and fault scenarios, then checkpoints its state for restart continuity. Default first batch: 120 readings on June 30, 2026. Raw CSV batches and private simulator state are saved in `data/simulator/`; operational storage/inference are not connected yet. For timer-only checks use `--heartbeat-only`.
-
-For normal automatic generation, run `python -m tyremind.monitoring.worker` and press Ctrl+C to stop. The full suite has 70 tests. Read [simulation continuation, commands and output details](docs/live_simulator.md).
-
-## Phase 2, Step 3: validate and store live batches
-
-```powershell
-git pull
-python -m pip install -e .
-python -m tyremind.monitoring.ingest
-python -m tyremind.monitoring.worker --run-once
-```
-
-The first command after installation drains existing generated batches without making new readings. The updated worker then generates, validates and stores further telemetry/inspections in `data/tyremind.db`, with no imputation. Invalid rows retain their original values/reasons in `ingestion_rejections`; `ingestion_batches` protects against repeat imports. The full suite has 78 tests. Read [live ingestion instructions](docs/live_ingestion.md). Saved-model inference and risk decisions are not connected yet.
-
-## Phase 2, Step 4: refresh current tyre features
-
-```powershell
-git pull
-python -m pip install -e .
-python -m tyremind.monitoring.features
-python -m unittest discover -s tests -v
-```
-
-This calculates the latest 19-feature row per tyre from operational history using the original training feature builder. Output is stored in SQLite's `current_features` table and `data/monitoring/features/`; historical training CSVs remain unchanged. Missing history remains missing and older tyre readings are explicitly marked stale. The default worker now generates, validates, ingests and refreshes features each cycle. Full suite: 85 tests. See [current feature instructions](docs/current_features.md). Inference remains the next step.
-
-## Phase 2, Step 5: run saved Random Forest and Isolation Forest
-
-```powershell
-git pull
-python -m pip install -e ".[ml]"
-python -m tyremind.monitoring.predict
-python -m unittest discover -s tests -v
-```
-
-Saved RF predicts tread depth after another 5,000 km; saved IF produces anomaly scores/flags at its calibrated threshold. Neither model is retrained. Results are stored in SQLite's `predictions` table and `data/monitoring/predictions/`. Stale/warmup rows are explicitly skipped. The default worker now includes inference; `--features-only` keeps Step 4 behavior. XGBoost remains optional via `--wear-model xgboost`. Full suite: 92 tests. See [saved inference commands and limitations](docs/saved_inference.md). Risk/event handling is next.
-
-## Phase 2, Step 6: assign deterministic risk levels
-
-```powershell
-git pull
-python -m pip install -e ".[ml]"
-python -m tyremind.monitoring.risk
-python -m unittest discover -s tests -v
-```
-
-Python rules combine current pressure/temperature/trends, measured tread, future tread prediction and IF evidence. Highest severity wins; an IF normal result cannot cancel direct alerts. Policy thresholds live in `config/risk_rules.json` and are explicitly synthetic-demo assumptions. Results/evidence are saved in SQLite `risk_assessments` and `data/monitoring/risk/`. Stale/incomplete evidence is distinguished from Normal. The worker includes risk classification by default; `--prediction-only` stops before it. Full suite: 107 tests. See [risk rules and exact thresholds](docs/risk_rules.md). Investigation events/agents are not connected yet.
-
-## Normal/Medium: save results and continue monitoring
-
-```powershell
-git pull
-python -m tyremind.monitoring.risk
-python -m unittest discover -s tests -v
-```
-
-Normal/Medium assessments now explicitly save `CONTINUE_MONITORING` in SQLite `monitoring_decisions`; the scheduled worker returns normally and continues on its next tick. High/Critical remain `AWAIT_EVENT_HANDLER`; unknown/stale evidence retains data review instead of becoming Normal. Updated CSV/report files are in `data/monitoring/risk/`. No events/agents are started yet. Full suite: 111 tests. See [continuation branch](docs/continue_monitoring.md).
-
-## Phase 2, Step 7: deduplicated risk events and investigation queue
-
-```powershell
-git pull
-python -m pip install -e ".[ml]"
-python -m tyremind.monitoring.events
-python -m unittest discover -s tests -v
-```
-
-High/Critical creates or updates one OPEN case per tyre and queues one active investigation. Repeated evidence is attached once. Pending jobs coalesce updates; new material evidence during RUNNING can request one follow-up. Normal recovery requires human review to resolve a case. The default worker includes event routing; `--risk-only` preserves its prior stage. Exports: `data/monitoring/events/`. Full suite: 124 tests. Read [case lifecycle and queue instructions](docs/risk_events.md). LangGraph execution remains Phase 3; jobs are queued, not automatically investigated yet.
-
-## Phase 2 final step: hand off actionable events to Phase 3
-
-```powershell
-git pull
-python -m pip install -e ".[ml]"
-python -m tyremind.monitoring.handoff
-python -m unittest discover -s tests -v
-```
-
-Pending investigation jobs now publish structured, source-linked payloads to SQLite `phase3_handoffs` and `data/phase3/inbox.json`. Repeated preparation is duplicate-free; coalesced evidence updates unclaimed snapshots. **No job is claimed and no LangGraph/LLM executes during preparation.** The default worker includes this handoff; `--events-only` retains the prior endpoint. Full suite: 130 tests. See [Phase 3 inbox contract and commands](docs/phase3_handoff.md). Agent execution starts in Phase 3.
-
-## Phase 3, Step 1: receive an actionable event
-
-```powershell
-git pull
-python -m pip install -e ".[agents]"
-python -m tyremind.agents.receive
-```
-
-Validates and atomically claims one pending investigation, prioritizing Critical events, then checkpoints its initial `RECEIVED` state in SQLite `phase3_receipts` and exports JSON under `data/phase3/received/`. Repeating the command resumes the same job; `NO_WORK` means no available pending event. No LLM or agent analysis runs yet. The worker continues to publish handoffs; this receiver is standalone. See [commands, ownership and restart behavior](docs/receive_event.md).
-
-## Phase 3, Step 2: start the LangGraph investigation supervisor
-
-```powershell
-git pull
-python -m pip install -e ".[agents]"
-python -m tyremind.agents.supervisor
-python -m unittest discover -s tests -p test_supervisor.py -v
-```
-
-Reuses the received event and runs a real `StateGraph`: validate → supervisor → health-assessment handoff or data-review handoff. Saves the plan and node trace in SQLite `phase3_supervisor_states` and `data/phase3/supervisor/`. Repeating resumes that saved plan. The supervisor uses explicit routing rules; specialist execution and LLM calls remain subsequent steps. The investigation stays RUNNING. See [workflow, concepts and restart behavior](docs/supervisor.md).
+See [simulation assumptions](docs/simulation.md), [model training results](docs/wear_model_results.md), [anomaly detection](docs/isolation_forest.md), [risk rules](docs/risk_rules.md), [document indexing](docs/chromadb.md) and [investigation routing](docs/supervisor.md).
