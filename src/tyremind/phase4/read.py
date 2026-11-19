@@ -45,6 +45,23 @@ def read_results(database=Path('data/tyremind.db'), tyre_id=None):
                 monitoring=monitoring, investigations=investigations)
 
 
+def read_tyre_history(tyre_id, cutoff, database=Path('data/tyremind.db')):
+    """Return observed history through the selected assessment's evidence cutoff."""
+    queries = {
+        'telemetry': """SELECT timestamp, pressure_kpa, temperature_c, load_ratio FROM telemetry
+                        WHERE tyre_id=? AND timestamp<=? ORDER BY timestamp""",
+        'inspections': """SELECT timestamp, tread_depth_mm FROM inspections
+                          WHERE tyre_id=? AND timestamp<=? ORDER BY timestamp""",
+        'risk': """SELECT feature_as_of AS timestamp, risk_level, data_status FROM risk_assessments
+                   WHERE tyre_id=? AND feature_as_of<=? ORDER BY feature_as_of, assessed_at, rowid"""
+    }
+    with closing(sqlite3.connect(Path(database).resolve().as_uri() + '?mode=ro', uri=True)) as connection:
+        connection.row_factory = sqlite3.Row
+        connection.execute('BEGIN')
+        return {name: [dict(row) for row in connection.execute(query, (tyre_id, cutoff))]
+                for name, query in queries.items()}
+
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--database', type=Path, default=Path('data/tyremind.db'))
