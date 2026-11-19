@@ -31,6 +31,10 @@ def read_results(database=Path('data/tyremind.db'), tyre_id=None):
             monitoring.append(assessment)
         approved = {}
         services = {}
+        completions = {}
+        if 'technician_completion_history' in tables:
+            for r in connection.execute('SELECT * FROM technician_completion_history ORDER BY id'):
+                completions[r['investigation_id']] = dict(r)
         if 'approved_work_orders' in tables:
             approved = {r['investigation_id']: dict(r) for r in connection.execute('SELECT * FROM approved_work_orders')}
         if 'technician_service_records' in tables:
@@ -50,7 +54,7 @@ def read_results(database=Path('data/tyremind.db'), tyre_id=None):
                 if tyre_id is None or outcome['tyre_id'] == tyre_id:
                     investigations.append(dict(message_type=row['message_type'], inbox_status=row['status'],
                                                published_at=row['published_at'], payload_sha256=row['payload_sha256'],
-                                               approved_order=approved.get(row['investigation_id']), service=services.get(row['investigation_id']),
+                                               completion=completions.get(row['investigation_id']), approved_order=approved.get(row['investigation_id']), service=services.get(row['investigation_id']),
                                                review=reviews.get(row['investigation_id']), outcome=outcome))
     return dict(monitoring_count=len(monitoring), investigation_count=len(investigations),
                 monitoring=monitoring, investigations=investigations)
