@@ -87,30 +87,35 @@ def prepare_phase3_handoffs(database=Path('data/tyremind.db'),output=Path('data/
     return report
 
 
+def claim_handoff_transaction(connection,investigation_id,handoff_id):
+    """Claim with an existing transaction, allowing atomic consumer checkpointing."""
+    handoff=connection.execute('SELECT * FROM phase3_handoffs WHERE investigation_id=?',(investigation_id,)).fetchone()
+    job=connection.execute('SELECT * FROM investigations WHERE investigation_id=?',(investigation_id,)).fetchone()
+    if handoff is None or job is None:
+        raise ValueError('Handoff does not exist; prepare the Phase 3 inbox first.')
+    if handoff['handoff_id']!=handoff_id or handoff['status']!='READY' or job['status']!='PENDING':
+        raise ValueError('Handoff is stale or already claimed.')
+    if hashlib.sha256(handoff['payload_json'].encode()).hexdigest()!=handoff['payload_sha256']:
+        raise ValueError('Handoff payload checksum mismatch.')
+    payload=json.loads(handoff['payload_json'])
+    event=connection.execute('SELECT * FROM risk_events WHERE event_id=?',(job['event_id'],)).fetchone()
+    if event['status']!='OPEN' or job['target_revision']!=handoff['revision'] or job['requested_assessment_id']!=payload['investigation']['requested_assessment_id']:
+        raise ValueError('Job snapshot changed; refresh the Phase 3 handoff before claiming.')
+    expected_event={key:event[key] for key in payload['event']}
+    if expected_event!=payload['event']:
+        raise ValueError('Event snapshot changed; refresh the Phase 3 handoff before claiming.')
+    token=uuid.uuid4().hex
+    connection.execute("UPDATE investigations SET status='RUNNING',started_at=?,claim_token=? WHERE investigation_id=?",
+                       (now(),token,investigation_id))
+    connection.execute("UPDATE phase3_handoffs SET status='CLAIMED',updated_at=? WHERE investigation_id=?",(now(),investigation_id))
+    return {**payload,'claim_token':token}
+
+
 def claim_phase3_handoff(database,investigation_id,handoff_id):
-    """Future Phase 3 hook: stale-file and duplicate-claim protection."""
+    """Claim one validated snapshot; retained for existing callers."""
     with transaction(database) as connection:
         connection.execute(HANDOFF_DDL)
-        handoff=connection.execute('SELECT * FROM phase3_handoffs WHERE investigation_id=?',(investigation_id,)).fetchone()
-        job=connection.execute('SELECT * FROM investigations WHERE investigation_id=?',(investigation_id,)).fetchone()
-        if handoff is None or job is None:
-            raise ValueError('Handoff does not exist; prepare the Phase 3 inbox first.')
-        if handoff['handoff_id']!=handoff_id or handoff['status']!='READY' or job['status']!='PENDING':
-            raise ValueError('Handoff is stale or already claimed.')
-        if hashlib.sha256(handoff['payload_json'].encode()).hexdigest()!=handoff['payload_sha256']:
-            raise ValueError('Handoff payload checksum mismatch.')
-        payload=json.loads(handoff['payload_json'])
-        event=connection.execute('SELECT * FROM risk_events WHERE event_id=?',(job['event_id'],)).fetchone()
-        if event['status']!='OPEN' or job['target_revision']!=handoff['revision'] or job['requested_assessment_id']!=payload['investigation']['requested_assessment_id']:
-            raise ValueError('Job snapshot changed; refresh the Phase 3 handoff before claiming.')
-        expected_event={key:event[key] for key in payload['event']}
-        if expected_event!=payload['event']:
-            raise ValueError('Event snapshot changed; refresh the Phase 3 handoff before claiming.')
-        token=uuid.uuid4().hex
-        connection.execute("UPDATE investigations SET status='RUNNING',started_at=?,claim_token=? WHERE investigation_id=?",
-                           (now(),token,investigation_id))
-        connection.execute("UPDATE phase3_handoffs SET status='CLAIMED',updated_at=? WHERE investigation_id=?",(now(),investigation_id))
-        return {**payload,'claim_token':token}
+        return claim_handoff_transaction(connection,investigation_id,handoff_id)
 
 
 def main():
