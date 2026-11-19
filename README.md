@@ -321,3 +321,13 @@ python -m unittest discover -s tests -v
 ```
 
 Pending investigation jobs now publish structured, source-linked payloads to SQLite `phase3_handoffs` and `data/phase3/inbox.json`. Repeated preparation is duplicate-free; coalesced evidence updates unclaimed snapshots. **No job is claimed and no LangGraph/LLM executes during preparation.** The default worker includes this handoff; `--events-only` retains the prior endpoint. Full suite: 130 tests. See [Phase 3 inbox contract and commands](docs/phase3_handoff.md). Agent execution starts in Phase 3.
+
+## Phase 3, Step 1: receive an actionable event
+
+```powershell
+git pull
+python -m pip install -e ".[agents]"
+python -m tyremind.agents.receive
+```
+
+Validates and atomically claims one pending investigation, prioritizing Critical events, then checkpoints its initial `RECEIVED` state in SQLite `phase3_receipts` and exports JSON under `data/phase3/received/`. Repeating the command resumes the same job; `NO_WORK` means no available pending event. No LLM or agent analysis runs yet. The worker continues to publish handoffs; this receiver is standalone. See [commands, ownership and restart behavior](docs/receive_event.md).
