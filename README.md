@@ -1,6 +1,6 @@
 # TyreMind AI
 
-Automated tyre monitoring proof of concept. **Implemented: Phase 1, Steps 1–5 — historical generation, preprocessing, SQLite storage, features and training/evaluation splits.** Wear-model comparison is implemented below; agents and the dashboard are future steps.
+Automated tyre monitoring proof of concept. **Implemented: Phase 1 data/models/RAG preparation, Phase 2 monitoring and Phase 3 event reception plus initial LangGraph supervisor routing.** Specialist analysis agents and the dashboard remain later steps.
 
 ## Run
 
@@ -331,3 +331,14 @@ python -m tyremind.agents.receive
 ```
 
 Validates and atomically claims one pending investigation, prioritizing Critical events, then checkpoints its initial `RECEIVED` state in SQLite `phase3_receipts` and exports JSON under `data/phase3/received/`. Repeating the command resumes the same job; `NO_WORK` means no available pending event. No LLM or agent analysis runs yet. The worker continues to publish handoffs; this receiver is standalone. See [commands, ownership and restart behavior](docs/receive_event.md).
+
+## Phase 3, Step 2: start the LangGraph investigation supervisor
+
+```powershell
+git pull
+python -m pip install -e ".[agents]"
+python -m tyremind.agents.supervisor
+python -m unittest discover -s tests -p test_supervisor.py -v
+```
+
+Reuses the received event and runs a real `StateGraph`: validate → supervisor → health-assessment handoff or data-review handoff. Saves the plan and node trace in SQLite `phase3_supervisor_states` and `data/phase3/supervisor/`. Repeating resumes that saved plan. The supervisor uses explicit routing rules; specialist execution and LLM calls remain subsequent steps. The investigation stays RUNNING. See [workflow, concepts and restart behavior](docs/supervisor.md).
