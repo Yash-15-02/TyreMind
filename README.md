@@ -96,7 +96,7 @@ Finalization publishes the result to the Phase 4 inbox. A passing draft becomes 
 | Technician work orders | Select a manager-approved order, record actual findings and authorized maintenance, then mark completion or follow-up. |
 | Evaluation | Evaluate alerts against simulated faults, compare mature forecasts with simulated tread, and save improvement proposals based on the results and feedback. |
 
-You can also inspect results in PowerShell:
+You can also inspect results in Terminal:
 
 ```powershell
 python -m tyremind.phase4.read --tyre-id TYR-0047
