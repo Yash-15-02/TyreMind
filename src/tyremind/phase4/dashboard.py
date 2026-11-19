@@ -16,6 +16,57 @@ COLORS = {'Normal': '#268477', 'Medium': '#BF891E', 'High': '#CE623B',
           'Critical': '#A33045', 'Unknown': '#778795'}
 
 
+def label(key):
+    return key.replace('_', ' ').capitalize().replace('kpa', 'kPa').replace('sha256', 'SHA-256')
+
+
+def display_value(value):
+    if value is None:
+        return 'Unavailable'
+    if isinstance(value, bool):
+        return 'Yes' if value else 'No'
+    if isinstance(value, float):
+        return f'{value:,.3f}'.rstrip('0').rstrip('.')
+    return str(value)
+
+
+def detail_rows(values, prefix=''):
+    rows = []
+    for key, value in values.items():
+        name = prefix + label(key)
+        if isinstance(value, dict):
+            rows.extend(detail_rows(value, name + ' · '))
+        elif isinstance(value, list):
+            for entry in value:
+                rows.append({'Detail': name, 'Value': display_value(entry)})
+        else:
+            rows.append({'Detail': name, 'Value': display_value(value)})
+    return rows
+
+
+def show_measurements(evidence):
+    cols = st.columns(3)
+    for col, (name, key) in zip(cols, [('Pressure (kPa)', 'pressure_kpa'),
+                                       ('Temperature (°C)', 'temperature_c'),
+                                       ('Measured tread (mm)', 'latest_measured_tread_mm')]):
+        col.metric(name, display_value(evidence.get(key)))
+    st.caption('Reference pressure (kPa): ' + display_value(evidence.get('reference_pressure_kpa'))
+               + ' · Days since tread inspection: ' + display_value(evidence.get('days_since_inspection')))
+    prediction = evidence.get('prediction') or {}
+    st.subheader('Model results')
+    if prediction:
+        cols = st.columns(3)
+        cols[0].metric('Forecast tread at +5,000 km (mm)', display_value(prediction.get('predicted_tread_depth_5000km_mm')))
+        cols[1].metric('Anomaly score', display_value(prediction.get('anomaly_score')))
+        cols[2].metric('Anomaly threshold', display_value(prediction.get('anomaly_threshold')))
+        flag = {1: 'Flagged', 0: 'Within threshold'}.get(prediction.get('anomaly_flag'), 'Unavailable')
+        st.caption(f"Wear model: {display_value(prediction.get('wear_model'))} · Anomaly result: {flag}")
+    else:
+        st.caption('No saved prediction for this assessment.')
+    if evidence.get('feature_values'):
+        st.dataframe(detail_rows(evidence['feature_values']), hide_index=True, use_container_width=True)
+
+
 def show_outcome(message, allow_review=False):
     outcome = message['outcome']
     failed = outcome['step'] == 12
@@ -39,7 +90,7 @@ def show_outcome(message, allow_review=False):
                                 (('Approved work order' if review and review['decision'] == 'APPROVED' else 'Draft work order'), outcome['work_order']['instructions'])]:
                 st.subheader(label)
                 st.write(text)
-            st.write('Alert', outcome['alert'])
+            st.table(detail_rows(outcome['alert']))
         for note in validation['evidence_notes']:
             st.info(note)
         for ref in validation['references']:
@@ -181,7 +232,7 @@ def main():
                 for key, title in [('alerts', 'Alert detection'), ('tread_forecasts', 'Tread forecasts'),
                                    ('recommendations', 'Recommendation outcomes')]:
                     st.subheader(title)
-                    st.json(report[key])
+                    st.dataframe(detail_rows(report[key]), hide_index=True, use_container_width=True)
                 st.caption('Null means insufficient observations. Manager decisions and completion track workflow outcomes.')
         st.subheader('Future improvements')
         if st.button('Save improvement report'):
@@ -189,9 +240,15 @@ def main():
                 saved = save_improvements()
                 st.success(f"Saved report · {len(saved['improvements'])} proposals")
                 for item in saved['improvements']:
-                    st.write(f"**{item['priority']} · {item['topic']}**")
-                    st.write(item['action'])
-                    st.write(item['evidence'])
+                    with st.container(border=True):
+                        st.caption(f"{item['priority']} priority")
+                        st.markdown(f"**{item['topic']}**")
+                        st.write(item['action'])
+                        evidence = item['evidence']
+                        if isinstance(evidence, dict):
+                            st.table(detail_rows(evidence))
+                        else:
+                            st.caption(evidence)
             except (ValueError, sqlite3.Error) as exc:
                 st.error(str(exc))
     with technician:
@@ -218,11 +275,13 @@ def main():
             by_id = {r['tyre_id']: r for r in visible}
             current = by_id[st.selectbox('Inspect tyre', list(by_id))]
             show_tyre(current, inbox)
-            st.write('Triggered rules', current['rules'])
+            for rule in current['rules']:
+                with st.expander(f"{rule['level']} · {label(rule['rule_id'])}"):
+                    st.table(detail_rows(rule['values']))
             if current['data_issues']:
                 st.warning(' · '.join(current['data_issues']))
             with st.expander('Measurements and model results'):
-                st.json(current['evidence'])
+                show_measurements(current['evidence'])
         else:
             st.info('No monitoring assessments are available.')
     with cases:
