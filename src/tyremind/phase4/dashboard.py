@@ -5,6 +5,7 @@ import sqlite3
 import plotly.graph_objects as go
 import streamlit as st
 
+from tyremind.phase4.review import DECISIONS, record_review
 from tyremind.phase4.read import read_results, read_tyre_history
 
 
@@ -12,10 +13,13 @@ COLORS = {'Normal': '#268477', 'Medium': '#BF891E', 'High': '#CE623B',
           'Critical': '#A33045', 'Unknown': '#778795'}
 
 
-def show_outcome(message):
+def show_outcome(message, allow_review=False):
     outcome = message['outcome']
     failed = outcome['step'] == 12
     title = 'Revision required' if failed else 'Awaiting human review'
+    review = message.get('review')
+    if review:
+        title = review['decision'].replace('_', ' ').title()
     with st.expander(f"{outcome['tyre_id']} · {title} · {message['published_at']}"):
         validation = outcome['validation']
         st.caption(f"{validation['priority']} priority · Evidence cutoff {validation['cutoff']}")
@@ -37,6 +41,25 @@ def show_outcome(message):
             st.info(note)
         for ref in validation['references']:
             st.markdown(f"[{ref['reference']}]({ref['url']})")
+
+        if review:
+            st.write(f"Reviewed by {review['reviewer']} · {review['reviewed_at']} UTC")
+            if review['note']:
+                st.text(review['note'])
+        elif allow_review and not failed:
+            with st.form(f"review-{outcome['investigation_id']}"):
+                st.subheader('Fleet manager review')
+                name = st.text_input('Reviewer name')
+                decision = st.selectbox('Decision', list(DECISIONS), index=None, format_func=DECISIONS.get)
+                note = st.text_area('Review note (required for changes or rejection)')
+                submit = st.form_submit_button('Save decision')
+            if submit:
+                try:
+                    record_review(outcome['investigation_id'], message['payload_sha256'], name, decision, note)
+                except (ValueError, sqlite3.Error) as exc:
+                    st.error(str(exc))
+                else:
+                    st.rerun()
 
 
 def show_tyre(current, inbox):
@@ -121,7 +144,7 @@ def main():
         selection = st.selectbox('Investigation tyre', ['All tyres'] + sorted({m['outcome']['tyre_id'] for m in inbox}))
         for message in reversed(inbox):
             if selection == 'All tyres' or message['outcome']['tyre_id'] == selection:
-                show_outcome(message)
+                show_outcome(message, allow_review=True)
         if not inbox:
             st.info('No investigation outcomes have been published yet.')
 
