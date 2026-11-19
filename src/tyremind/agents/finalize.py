@@ -3,6 +3,7 @@ import argparse
 import json
 from pathlib import Path
 
+from tyremind.agents.phase4_handoff import enqueue
 from tyremind.agents.supervisor import digest, export_json
 from tyremind.monitoring.events import finish_in_transaction, transaction
 
@@ -50,6 +51,9 @@ def finalize(identity, database=Path('data/tyremind.db'), consumer_id='local-pha
             finished = finish_in_transaction(connection, identity, job['owner_token'], packet, error)
             connection.execute('UPDATE phase3_receipts SET stage=? WHERE investigation_id=?',
                                (finished['status'], identity))
+        handoff = enqueue(connection, packet)
+    export_json(root.parent/'phase4'/'inbox'/f'{identity}.json', dict(schema_version=1,
+                message_type=handoff['message_type'], outcome=packet))
     folder = root/'delivery'/identity
     export_json(folder/'outcome.json', packet)
     if packet['step'] == 11:
