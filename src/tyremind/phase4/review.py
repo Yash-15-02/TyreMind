@@ -5,6 +5,8 @@ import sqlite3
 from contextlib import closing
 from pathlib import Path
 
+from tyremind.phase4.history import sync_history
+
 DECISIONS = {'APPROVED': 'Approve draft', 'CHANGES_REQUESTED': 'Request changes',
              'REJECTED': 'Reject draft'}
 
@@ -49,3 +51,5 @@ def record_review(identity, expected_hash, reviewer, decision, note='', database
                 FROM fleet_manager_reviews WHERE investigation_id=?
                 ON CONFLICT(investigation_id) DO NOTHING""",
                 (packet['tyre_id'], packet['event_id'], packet['work_order']['instructions'], identity))
+        if decision == 'REJECTED':
+            sync_history(conn, identity)
