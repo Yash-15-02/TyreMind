@@ -62,11 +62,11 @@ Transport states are READY, CLAIMED, COMPLETED, FAILED or CANCELLED. Actual job 
 
 Database preparation is transactional. The inbox JSON is replaced atomically afterward. If a file export fails, rerunning regenerates it from the committed database without creating another job/handoff. The report includes the inbox checksum. An exported file is a snapshot and may become old; the consumer must verify/claim against SQLite before execution, not blindly process every file message.
 
-## Phase 3 consumer hook — not executed today
+## Phase 3 consumer hook
 
 `claim_phase3_handoff(database, investigation_id, handoff_id)` verifies READY/PENDING state, payload checksum, unchanged event/job snapshot and revision. It atomically claims the investigation and returns an ownership token with its payload. Concurrent consumers cannot claim the same job. Outdated envelope IDs/snapshots are rejected and require refresh.
 
-Tomorrow's consumer will use that hook, invoke LangGraph and call the existing `finish_investigation` with the claim token and validated result/error. No such consumer runs today. Claim leases/crash recovery, LLM/provider configuration, agent tools and actual investigation reports remain Phase 3 work.
+Phase 3 Step 1 now provides a [receiver](receive_event.md) using the same atomic claim checks. It saves an initial investigation state and resumes it after restart. LangGraph, LLM calls, agent tools and investigation reports remain subsequent steps. There is no automatic claim lease; keep the consumer ID stable to resume its saved receipt.
 
 ## Verification
 
