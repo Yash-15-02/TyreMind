@@ -5,6 +5,7 @@ import sqlite3
 import plotly.graph_objects as go
 import streamlit as st
 
+from tyremind.phase4.technician import record_service
 from tyremind.phase4.review import record_review
 from tyremind.phase4.read import read_results, read_tyre_history
 
@@ -99,6 +100,41 @@ def show_tyre(current, inbox):
         st.caption('No published investigation for this tyre.')
 
 
+def technician_view(inbox):
+    orders = {m['outcome']['investigation_id']: m for m in inbox
+              if m.get('approved_order') and (m.get('review') or {}).get('decision') == 'APPROVED'}
+    if not orders:
+        st.info('No approved work orders are available for inspection.')
+        return
+    identity = st.selectbox('Approved work order', list(orders),
+                            format_func=lambda key: f"{orders[key]['approved_order']['tyre_id']} · {key}")
+    message = orders[identity]
+    order = message['approved_order']
+    st.caption(f"Approved by {order['approved_by']} · {order['approved_at']} UTC")
+    st.subheader('Authorized instructions')
+    st.write(order['instructions'])
+    service = message['service']
+    if service:
+        st.caption(f"Recorded by {service['technician']} · {service['recorded_at']} UTC")
+        st.write('Inspection findings', service['findings'])
+        st.write('Maintenance performed', service['maintenance'] or 'None recorded')
+        return
+    with st.form(f'technician-{identity}'):
+        name = st.text_input('Technician name')
+        findings = st.text_area('Inspection findings')
+        outcome = st.radio('Maintenance outcome', ['Inspection only', 'Authorized maintenance performed'], index=None)
+        details = st.text_area('Authorized maintenance actually performed')
+        submit = st.form_submit_button('Save technician record')
+    if submit:
+        try:
+            performed = None if outcome is None else outcome == 'Authorized maintenance performed'
+            record_service(identity, message['payload_sha256'], name, findings, performed, details)
+        except (ValueError, sqlite3.Error) as exc:
+            st.error(str(exc))
+        else:
+            st.rerun()
+
+
 def main():
     st.set_page_config(page_title='TyreMind | Fleet dashboard', layout='wide')
     st.title('Fleet dashboard')
@@ -111,7 +147,9 @@ def main():
         return
     rows = snapshot['monitoring']
     inbox = snapshot['investigations']
-    overview, cases = st.tabs(['Fleet monitoring', f'Investigation inbox ({len(inbox)})'])
+    overview, cases, technician = st.tabs(['Fleet monitoring', f'Investigation inbox ({len(inbox)})', 'Technician work orders'])
+    with technician:
+        technician_view(inbox)
     with overview:
         truck = st.selectbox('Truck', ['All trucks'] + sorted({r['truck_id'] for r in rows}))
         visible = [r for r in rows if truck == 'All trucks' or r['truck_id'] == truck]
