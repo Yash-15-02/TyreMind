@@ -6,6 +6,7 @@ import plotly.graph_objects as go
 import streamlit as st
 
 from tyremind.phase4.technician import record_service, record_completion
+from tyremind.phase4.improvements import save_improvements
 from tyremind.phase4.evaluate import evaluate
 from tyremind.phase4.review import record_review
 from tyremind.phase4.read import read_results, read_tyre_history
@@ -182,6 +183,17 @@ def main():
                     st.subheader(title)
                     st.json(report[key])
                 st.caption('Null means insufficient observations. Manager decisions and completion track workflow outcomes.')
+        st.subheader('Future improvements')
+        if st.button('Save improvement report'):
+            try:
+                saved = save_improvements()
+                st.success(f"Saved report · {len(saved['improvements'])} proposals")
+                for item in saved['improvements']:
+                    st.write(f"**{item['priority']} · {item['topic']}**")
+                    st.write(item['action'])
+                    st.write(item['evidence'])
+            except (ValueError, sqlite3.Error) as exc:
+                st.error(str(exc))
     with technician:
         technician_view(inbox)
     with overview:
