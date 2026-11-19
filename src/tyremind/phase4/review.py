@@ -38,3 +38,14 @@ def record_review(identity, expected_hash, reviewer, decision, note='', database
                          (identity, *values))
         elif previous != values:
             raise ValueError('A decision has already been recorded. Refresh to view it.')
+
+        if decision == 'APPROVED':
+            conn.execute("""CREATE TABLE IF NOT EXISTS approved_work_orders (
+                investigation_id TEXT PRIMARY KEY, tyre_id TEXT NOT NULL, event_id TEXT NOT NULL,
+                payload_sha256 TEXT NOT NULL, instructions TEXT NOT NULL, approved_by TEXT NOT NULL,
+                approved_at TEXT NOT NULL)""")
+            conn.execute("""INSERT INTO approved_work_orders
+                SELECT investigation_id, ?, ?, payload_sha256, ?, reviewer, reviewed_at
+                FROM fleet_manager_reviews WHERE investigation_id=?
+                ON CONFLICT(investigation_id) DO NOTHING""",
+                (packet['tyre_id'], packet['event_id'], packet['work_order']['instructions'], identity))
