@@ -191,20 +191,24 @@ def claim_investigation(database=Path('data/tyremind.db')):
 def finish_investigation(database,investigation_id,claim_token,result=None,error=None):
     """Persist a claimed result/error and queue one follow-up for newer concerns."""
     with transaction(database) as connection:
-        job=connection.execute('SELECT * FROM investigations WHERE investigation_id=?',(investigation_id,)).fetchone()
-        if job is None or job['status']!='RUNNING' or job['claim_token']!=claim_token:
-            raise ValueError('Investigation is not running under this claim token.')
-        status='FAILED' if error is not None else 'COMPLETED'
-        payload=json.dumps(result,allow_nan=False) if result is not None else None
-        connection.execute('UPDATE investigations SET status=?,finished_at=?,error=?,result_json=? WHERE investigation_id=?',
-                           (status,now(),str(error) if error is not None else None,payload,investigation_id))
-        if connection.execute("SELECT 1 FROM sqlite_master WHERE type='table' AND name='phase3_handoffs'").fetchone():
-            connection.execute('UPDATE phase3_handoffs SET status=?,updated_at=? WHERE investigation_id=?',(status,now(),investigation_id))
-        event=connection.execute('SELECT * FROM risk_events WHERE event_id=?',(job['event_id'],)).fetchone()
-        followup=None
-        if event['status']=='OPEN' and event['revision']>job['target_revision']:
-            followup,_=queue_job(connection,event['event_id'])
-        return {'status':status,'followup_investigation_id':followup}
+        return finish_in_transaction(connection,investigation_id,claim_token,result,error)
+
+
+def finish_in_transaction(connection,investigation_id,claim_token,result=None,error=None):
+    job=connection.execute('SELECT * FROM investigations WHERE investigation_id=?',(investigation_id,)).fetchone()
+    if job is None or job['status']!='RUNNING' or job['claim_token']!=claim_token:
+        raise ValueError('Investigation is not running under this claim token.')
+    status='FAILED' if error is not None else 'COMPLETED'
+    payload=json.dumps(result,allow_nan=False) if result is not None else None
+    connection.execute('UPDATE investigations SET status=?,finished_at=?,error=?,result_json=? WHERE investigation_id=?',
+                       (status,now(),str(error) if error is not None else None,payload,investigation_id))
+    if connection.execute("SELECT 1 FROM sqlite_master WHERE type='table' AND name='phase3_handoffs'").fetchone():
+        connection.execute('UPDATE phase3_handoffs SET status=?,updated_at=? WHERE investigation_id=?',(status,now(),investigation_id))
+    event=connection.execute('SELECT * FROM risk_events WHERE event_id=?',(job['event_id'],)).fetchone()
+    followup=None
+    if event['status']=='OPEN' and event['revision']>job['target_revision']:
+        followup,_=queue_job(connection,event['event_id'])
+    return {'status':status,'followup_investigation_id':followup}
 
 
 def retry_failed_investigation(database,investigation_id):
