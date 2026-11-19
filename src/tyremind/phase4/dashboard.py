@@ -5,7 +5,7 @@ import sqlite3
 import plotly.graph_objects as go
 import streamlit as st
 
-from tyremind.phase4.review import DECISIONS, record_review
+from tyremind.phase4.review import record_review
 from tyremind.phase4.read import read_results, read_tyre_history
 
 
@@ -33,7 +33,7 @@ def show_outcome(message, allow_review=False):
         else:
             for label, text in [('Health assessment', outcome['report']['assessment']),
                                 ('Root-cause hypotheses', outcome['report']['analysis']),
-                                ('Draft work order', outcome['work_order']['instructions'])]:
+                                (('Approved work order' if review and review['decision'] == 'APPROVED' else 'Draft work order'), outcome['work_order']['instructions'])]:
                 st.subheader(label)
                 st.write(text)
             st.write('Alert', outcome['alert'])
@@ -50,8 +50,9 @@ def show_outcome(message, allow_review=False):
             with st.form(f"review-{outcome['investigation_id']}"):
                 st.subheader('Fleet manager review')
                 name = st.text_input('Reviewer name')
-                decision = st.selectbox('Decision', list(DECISIONS), index=None, format_func=DECISIONS.get)
-                note = st.text_area('Review note (required for changes or rejection)')
+                decision = st.selectbox('Approve draft?', ['APPROVED', 'REJECTED'], index=None,
+                                        format_func={'APPROVED': 'Yes — approve', 'REJECTED': 'No — reject'}.get)
+                note = st.text_area('Review note (reason required for rejection)')
                 submit = st.form_submit_button('Save decision')
             if submit:
                 try:
