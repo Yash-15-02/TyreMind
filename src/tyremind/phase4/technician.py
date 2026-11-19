@@ -3,6 +3,8 @@ import sqlite3
 from contextlib import closing
 from pathlib import Path
 
+from tyremind.phase4.history import sync_history
+
 
 def record_service(identity, expected_hash, technician, findings, performed, maintenance,
                    database=Path('data/tyremind.db')):
@@ -59,3 +61,4 @@ def record_completion(identity, expected_hash, actual_findings, status, recorded
             raise ValueError('The outcome changed. Refresh before submitting.')
         conn.execute("""INSERT INTO technician_completion_history
             (investigation_id,actual_findings,status,recorded_by) VALUES (?,?,?,?)""", (identity, *values))
+        sync_history(conn, identity)
