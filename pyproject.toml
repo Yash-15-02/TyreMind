@@ -10,6 +10,7 @@ requires-python = ">=3.10"
 dependencies = ["numpy>=1.24,<3", "pandas>=2,<3", "pypdf>=5,<7", "fonttools>=4,<5", "APScheduler>=3.10,<4"]
 
 [project.optional-dependencies]
+dashboard = ["streamlit>=1.40,<2", "plotly>=5,<7"]
 llm = ["litellm>=1.75,<2,!=1.82.7,!=1.82.8"]
 agents = ["pydantic>=2,<3", "langgraph>=1,<2"]
 ml = ["scikit-learn>=1.5,<2", "xgboost>=2,<4", "joblib>=1.4,<2"]
