@@ -39,3 +39,5 @@ Get-Content .\data\phase3\received\receive_report.json
 explorer .\data\phase3\received
 python -m unittest discover -s tests -p test_receive.py -v
 ```
+
+Next: [start the LangGraph supervisor](supervisor.md) using the same consumer and received event. The receipt remains the immutable starting snapshot; the supervisor has a separate saved state.
