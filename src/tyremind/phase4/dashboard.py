@@ -5,7 +5,7 @@ import sqlite3
 import plotly.graph_objects as go
 import streamlit as st
 
-from tyremind.phase4.technician import record_service
+from tyremind.phase4.technician import record_service, record_completion
 from tyremind.phase4.review import record_review
 from tyremind.phase4.read import read_results, read_tyre_history
 
@@ -118,6 +118,27 @@ def technician_view(inbox):
         st.caption(f"Recorded by {service['technician']} · {service['recorded_at']} UTC")
         st.write('Inspection findings', service['findings'])
         st.write('Maintenance performed', service['maintenance'] or 'None recorded')
+        latest = message.get('completion')
+        st.subheader('Inspection outcome')
+        if latest:
+            st.write(latest['status'].replace('_', ' ').title())
+            st.text(latest['actual_findings'])
+            st.caption(f"{latest['recorded_by']} · {latest['recorded_at']} UTC")
+        if not latest or latest['status'] != 'COMPLETED':
+            with st.form(f"outcome-{identity}-{latest['id'] if latest else 0}"):
+                recorder = st.text_input('Recorded by', value=service['technician'])
+                findings = st.text_area('Actual findings', value=latest['actual_findings'] if latest else service['findings'])
+                status = st.selectbox('Work order status', ['COMPLETED', 'FOLLOW_UP_REQUIRED'], index=None,
+                                      format_func=lambda value: value.replace('_', ' ').title())
+                save = st.form_submit_button('Save inspection outcome')
+            if save:
+                try:
+                    record_completion(identity, message['payload_sha256'], findings, status, recorder,
+                                      latest['id'] if latest else None)
+                except (ValueError, sqlite3.Error) as exc:
+                    st.error(str(exc))
+                else:
+                    st.rerun()
         return
     with st.form(f'technician-{identity}'):
         name = st.text_input('Technician name')
