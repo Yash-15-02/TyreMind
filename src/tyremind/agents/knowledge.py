@@ -10,6 +10,14 @@ from tyremind.rag.embed import MODEL_NAME, MODEL_REVISION
 
 
 def retrieve(index_dir, rules):
+    topics = sorted({rule['rule_id'].replace('_', ' ') for rule in rules})
+    query = 'Truck tire inspection and maintenance guidance for ' + ', '.join(topics)
+    return search_passages(index_dir, query)
+
+
+def search_passages(index_dir, query, limit=3, snapshot=None):
+    if not isinstance(query, str) or not query.strip() or not 1 <= limit <= 10:
+        raise ValueError('Supply a nonempty query and a passage limit between 1 and 10.')
     import chromadb
     from chromadb.config import Settings
     from sentence_transformers import SentenceTransformer
@@ -20,16 +28,16 @@ def retrieve(index_dir, rules):
     index = json.loads(pointer.read_text(encoding='utf-8'))
     if (index['model'], index['model_revision']) != (MODEL_NAME, MODEL_REVISION):
         raise ValueError('The active index requires a different embedding model.')
+    if snapshot and (index['collection'], index['snapshot_sha256']) != snapshot:
+        raise ValueError('The active knowledge index differs from this investigation.')
     client = chromadb.PersistentClient(path=str(index_dir), settings=Settings(anonymized_telemetry=False))
     try:
         collection = client.get_collection(index['collection'], embedding_function=None)
         if collection.metadata['snapshot_sha256'] != index['snapshot_sha256'] or collection.count() != index['records'] or not index['records']:
             raise ValueError('The active Chroma collection does not match its Phase 1 index.')
-        topics = sorted({rule['rule_id'].replace('_', ' ') for rule in rules})
-        query = 'Truck tire inspection and maintenance guidance for ' + ', '.join(topics)
         model = SentenceTransformer(MODEL_NAME, revision=MODEL_REVISION, device='cpu', trust_remote_code=False)
         vector = model.encode([query], normalize_embeddings=True)
-        result = collection.query(query_embeddings=vector.tolist(), n_results=min(3, index['records']),
+        result = collection.query(query_embeddings=vector.tolist(), n_results=min(limit, index['records']),
                                   include=['metadatas', 'documents', 'distances'])
         passages = [dict(chunk_id=key, text=text, source=metadata, cosine_distance=distance)
                     for key, text, metadata, distance in zip(result['ids'][0], result['documents'][0],
