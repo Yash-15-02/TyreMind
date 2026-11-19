@@ -5,7 +5,7 @@ import sqlite3
 import plotly.graph_objects as go
 import streamlit as st
 
-from tyremind.phase4.read import read_results
+from tyremind.phase4.read import read_results, read_tyre_history
 
 
 COLORS = {'Normal': '#268477', 'Medium': '#BF891E', 'High': '#CE623B',
@@ -37,6 +37,42 @@ def show_outcome(message):
             st.info(note)
         for ref in validation['references']:
             st.markdown(f"[{ref['reference']}]({ref['url']})")
+
+
+def show_tyre(current, inbox):
+    tyre = current['tyre_id']
+    st.subheader(f"{tyre} · {current['risk_level'] or 'Unknown'} risk")
+    st.caption(f"Latest reading {current['timestamp']} · Evidence cutoff {current['feature_as_of']}")
+    history = read_tyre_history(tyre, current['feature_as_of'])
+    metrics = {'Pressure (kPa)': ('telemetry', 'pressure_kpa'),
+               'Temperature (°C)': ('telemetry', 'temperature_c'),
+               'Load ratio': ('telemetry', 'load_ratio'),
+               'Measured tread depth (mm)': ('inspections', 'tread_depth_mm')}
+    label = st.radio('Measurement trend', list(metrics), horizontal=True)
+    table, field = metrics[label]
+    readings = history[table]
+    if readings:
+        figure = go.Figure(go.Scatter(x=[r['timestamp'] for r in readings],
+                                      y=[r[field] for r in readings], mode='lines+markers'))
+        figure.update_layout(yaxis_title=label, xaxis_title='Observation date', height=300)
+        st.plotly_chart(figure, use_container_width=True)
+    else:
+        st.info('No recorded measurements for this trend.')
+    risks = history['risk']
+    levels = [r['risk_level'] or 'Unknown' for r in risks]
+    timeline = go.Figure(go.Scatter(x=[r['timestamp'] for r in risks], y=levels, mode='markers',
+                                    marker=dict(size=10, color=[COLORS.get(v, COLORS['Unknown']) for v in levels]),
+                                    text=[r['data_status'] for r in risks]))
+    timeline.update_layout(title='Recorded risk assessments', height=270, xaxis_title='Assessment cutoff',
+                           yaxis=dict(type='category', categoryorder='array',
+                                      categoryarray=['Unknown', 'Normal', 'Medium', 'High', 'Critical']))
+    st.plotly_chart(timeline, use_container_width=True)
+    st.subheader('AI findings and source references')
+    matches = [m for m in reversed(inbox) if m['outcome']['tyre_id'] == tyre]
+    for message in matches:
+        show_outcome(message)
+    if not matches:
+        st.caption('No published investigation for this tyre.')
 
 
 def main():
@@ -73,6 +109,7 @@ def main():
                          hide_index=True, use_container_width=True)
             by_id = {r['tyre_id']: r for r in visible}
             current = by_id[st.selectbox('Inspect tyre', list(by_id))]
+            show_tyre(current, inbox)
             st.write('Triggered rules', current['rules'])
             if current['data_issues']:
                 st.warning(' · '.join(current['data_issues']))
