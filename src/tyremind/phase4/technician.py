@@ -32,3 +32,30 @@ def record_service(identity, expected_hash, technician, findings, performed, mai
                 technician,findings,maintenance_performed,maintenance) VALUES (?,?,?,?,?,?)""", (identity, *values))
         elif previous != values:
             raise ValueError('This order already has a technician record. Refresh to view it.')
+
+
+def record_completion(identity, expected_hash, actual_findings, status, recorded_by,
+                      previous_id=None, database=Path('data/tyremind.db')):
+    actual_findings, recorded_by = actual_findings.strip(), recorded_by.strip()
+    if not actual_findings or not recorded_by or status not in ('COMPLETED', 'FOLLOW_UP_REQUIRED'):
+        raise ValueError('Enter actual findings, your name and a completion status.')
+    with closing(sqlite3.connect(Path(database).resolve().as_uri() + '?mode=rw', uri=True)) as conn, conn:
+        conn.execute('BEGIN IMMEDIATE')
+        exists = conn.execute("SELECT 1 FROM sqlite_master WHERE name='technician_service_records'").fetchone()
+        if not exists or not conn.execute("""SELECT 1 FROM technician_service_records
+                WHERE investigation_id=? AND payload_sha256=?""", (identity, expected_hash)).fetchone():
+            raise ValueError('Save the matching Step 7 technician record first.')
+        conn.execute("""CREATE TABLE IF NOT EXISTS technician_completion_history (
+            id INTEGER PRIMARY KEY, investigation_id TEXT NOT NULL, actual_findings TEXT NOT NULL,
+            status TEXT NOT NULL, recorded_by TEXT NOT NULL, recorded_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP)""")
+        latest = conn.execute("""SELECT id,actual_findings,status,recorded_by FROM technician_completion_history
+            WHERE investigation_id=? ORDER BY id DESC LIMIT 1""", (identity,)).fetchone()
+        values = (actual_findings, status, recorded_by)
+        if latest and latest[1:] == values:
+            return
+        if latest and latest[2] == 'COMPLETED':
+            raise ValueError('This work order already has a completed outcome.')
+        if (latest[0] if latest else None) != previous_id:
+            raise ValueError('The outcome changed. Refresh before submitting.')
+        conn.execute("""INSERT INTO technician_completion_history
+            (investigation_id,actual_findings,status,recorded_by) VALUES (?,?,?,?)""", (identity, *values))
