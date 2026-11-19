@@ -10,11 +10,12 @@ requires-python = ">=3.10"
 dependencies = ["numpy>=1.24,<3", "pandas>=2,<3", "pypdf>=5,<7", "fonttools>=4,<5", "APScheduler>=3.10,<4"]
 
 [project.optional-dependencies]
-agents = ["pydantic>=2,<3"]
+agents = ["pydantic>=2,<3", "langgraph>=1,<2"]
 ml = ["scikit-learn>=1.5,<2", "xgboost>=2,<4", "joblib>=1.4,<2"]
 rag = ["sentence-transformers>=3,<6", "chromadb>=1.5.9,<2"]
 
 [project.scripts]
+tyremind-supervise = "tyremind.agents.supervisor:main"
 tyremind-receive-event = "tyremind.agents.receive:main"
 tyremind-phase3-handoff = "tyremind.monitoring.handoff:main"
 tyremind-events = "tyremind.monitoring.events:main"
