@@ -4,6 +4,7 @@ from unittest.mock import patch
 
 import test_handoff as fixtures
 from tyremind.agents.investigation_loop import run_loop
+from tyremind.agents.prepare_outcome import prepare_outcome
 
 
 class InvestigationLoopTests(unittest.TestCase):
@@ -29,3 +30,21 @@ class InvestigationLoopTests(unittest.TestCase):
 
     def test_budget_persists_across_restart(self):
         self.simulate(['MORE_EVIDENCE'] * 2, 'NEEDS_HUMAN_REVIEW')
+
+    def test_human_review_packet(self):
+        self.simulate(['MORE_EVIDENCE'] * 2, 'NEEDS_HUMAN_REVIEW')
+        outcome = prepare_outcome(self.database, self.root)['outcome']
+        self.assertEqual(outcome['kind'], 'HUMAN_REVIEW')
+        self.assertIsNone(outcome['maintenance_draft'])
+        self.assertEqual(len(outcome['reviews']), 2)
+        self.assertEqual(prepare_outcome(self.database, self.root)['action'], 'RESUMED')
+
+    def test_findings_draft(self):
+        self.simulate(['ENOUGH_EVIDENCE'], 'READY_FOR_FINDINGS')
+        reply = json.dumps(dict(findings='Alert observed', uncertainty='Cause unknown',
+                                proposed_inspection='Inspect the tyre'))
+        with patch('tyremind.agents.prepare_outcome.request_text', return_value=reply) as model:
+            outcome = prepare_outcome(self.database, self.root)['outcome']
+            self.assertEqual(outcome['maintenance_draft']['status'], 'DRAFT')
+            self.assertEqual(prepare_outcome(self.database, self.root)['outcome'], outcome)
+            model.assert_called_once()
