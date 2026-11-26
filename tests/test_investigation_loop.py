@@ -96,3 +96,27 @@ class InvestigationLoopTests(unittest.TestCase):
         self.assertFalse(saved['has_work_order'])
         self.assertEqual(publish(result['investigation_id'], self.database, self.root/'inbox')['message_type'],
                          'INVESTIGATION_VALIDATION_FAILED')
+
+    def test_automatic_queue_to_inbox_and_delivery_recovery(self):
+        from tyremind.automate import process_next
+        from tyremind.phase4.read import read_results
+
+        choice = '{"tool":"search_manuals","reason":"Check load","query":"load"}'
+        review = json.dumps(dict(finding='Load alert', reason='Inspection appropriate', decision='ENOUGH_EVIDENCE'))
+        draft = json.dumps(dict(findings='Load alert', uncertainty='Cause unknown', proposed_inspection='Inspect tyre'))
+        with patch('tyremind.agents.select_tool.request_text', return_value=choice), patch(
+                'tyremind.agents.execute_tool.search_passages', return_value={'passages': []}), patch(
+                'tyremind.agents.review_evidence.request_text', return_value=review), patch(
+                'tyremind.agents.prepare_outcome.request_text', return_value=draft):
+            with patch('tyremind.automate.publish', side_effect=OSError('interrupted')):
+                with self.assertRaises(OSError):
+                    process_next(self.database, self.root, local_model=None)
+            result = process_next(self.database, self.root, local_model=None)
+        self.assertEqual(result['action'], 'PUBLISHED')
+        # The handoff fixture starts at the investigation queue; the live monitor
+        # also creates this table for its dashboard decision column.
+        from tyremind.monitoring.events import transaction
+        with transaction(self.database) as db:
+            db.execute('CREATE TABLE IF NOT EXISTS monitoring_decisions (assessment_id TEXT, next_action TEXT)')
+        self.assertEqual(read_results(self.database)['investigation_count'], 1)
+        self.assertEqual(process_next(self.database, self.root)['action'], 'NO_WORK')

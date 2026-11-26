@@ -219,6 +219,11 @@ def main():
     st.title('Fleet dashboard')
     st.sidebar.header('TyreMind')
     st.sidebar.button('Refresh from SQLite')
+    show_fleet()
+
+
+@st.fragment(run_every='15s')
+def show_fleet():
     try:
         snapshot = read_results()
     except (sqlite3.Error, ValueError) as exc:

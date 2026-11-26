@@ -2,7 +2,15 @@
 
 TyreMind monitors a simulated truck fleet for tyre pressure, temperature, load and wear. A monitoring worker scores each tyre. High or Critical readings can open investigations. Three LLM agents use the saved measurements, model results and manufacturer manual passages to draft a health assessment, possible causes and a maintenance plan. A fleet manager reviews eligible work orders in a local Streamlit dashboard.
 
-**Already ran TyreMind?** From the cloned project folder containing `pyproject.toml`, use the Python environment where you installed TyreMind:
+**Run the automatic pipeline** from a prepared project with the local database, trained models, manual index and Ollama service available. Stop any separately running monitoring worker or dashboard first.
+
+```powershell
+python -m tyremind.automate --local-ollama llama3.2:3b
+```
+
+This starts fleet monitoring and the dashboard, resumes any active investigation, and processes queued alerts through evidence gathering, validation and publication. The dashboard checks SQLite every 15 seconds. Press Ctrl+C in the launcher terminal to stop. Manager approval is required for maintenance.
+
+**Only opening the dashboard?** From the cloned project folder containing `pyproject.toml`, use the Python environment where you installed TyreMind:
 
 ```powershell
 git pull
