@@ -84,6 +84,11 @@ def show_outcome(message, allow_review=False):
                 st.write(finding['detail'])
                 if finding.get('excerpt'):
                     st.text(finding['excerpt'])
+        elif outcome.get('review_only'):
+            st.write(outcome['report']['reason'])
+            for check in outcome['report']['checks']:
+                st.write(f'• {check}')
+            st.table(detail_rows(outcome['alert']))
         else:
             for label, text in [('Health assessment', outcome['report']['assessment']),
                                 ('Root-cause hypotheses', outcome['report']['analysis']),
@@ -100,7 +105,7 @@ def show_outcome(message, allow_review=False):
             st.write(f"Reviewed by {review['reviewer']} · {review['reviewed_at']} UTC")
             if review['note']:
                 st.text(review['note'])
-        elif allow_review and not failed:
+        elif allow_review and not failed and not outcome.get('review_only'):
             with st.form(f"review-{outcome['investigation_id']}"):
                 st.subheader('Fleet manager review')
                 name = st.text_input('Reviewer name')

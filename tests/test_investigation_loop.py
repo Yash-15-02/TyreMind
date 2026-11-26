@@ -5,6 +5,7 @@ from unittest.mock import patch
 import test_handoff as fixtures
 from tyremind.agents.investigation_loop import run_loop
 from tyremind.agents.prepare_outcome import prepare_outcome
+from tyremind.agents.phase4_handoff import publish
 from tyremind.agents.save_outcome import save_outcome
 from tyremind.agents.validate_outcome import validate_outcome
 
@@ -52,6 +53,8 @@ class InvestigationLoopTests(unittest.TestCase):
             model.assert_called_once()
         validation = validate_outcome(self.database, self.root)
         self.assertTrue(save_outcome(validation['investigation_id'], self.database)['has_work_order'])
+        self.assertEqual(publish(validation['investigation_id'], self.database, self.root/'inbox')['message_type'],
+                         'INVESTIGATION_READY_FOR_REVIEW')
 
     def test_validation_corrects_mismatched_sources_and_missing_checks(self):
         from tyremind.agents.validate_outcome import validate_outcome
@@ -72,6 +75,9 @@ class InvestigationLoopTests(unittest.TestCase):
         self.assertEqual(saved['kind'], 'HUMAN_REVIEW')
         self.assertFalse(saved['has_work_order'])
         self.assertEqual(save_outcome(identity, self.database)['action'], 'RESUMED')
+        handoff = publish(identity, self.database, self.root/'inbox')
+        self.assertEqual(handoff['message_type'], 'INVESTIGATION_NEEDS_HUMAN_REVIEW')
+        self.assertEqual(publish(identity, self.database, self.root/'inbox')['action'], 'ALREADY_PUBLISHED')
 
     def test_failed_correction_is_saved(self):
         from tyremind.agents.validate_outcome import validate_outcome
@@ -88,3 +94,5 @@ class InvestigationLoopTests(unittest.TestCase):
         saved = save_outcome(result['investigation_id'], self.database)
         self.assertEqual(saved['status'], 'VALIDATION_FAILED')
         self.assertFalse(saved['has_work_order'])
+        self.assertEqual(publish(result['investigation_id'], self.database, self.root/'inbox')['message_type'],
+                         'INVESTIGATION_VALIDATION_FAILED')
