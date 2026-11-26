@@ -5,6 +5,8 @@ from unittest.mock import patch
 import test_handoff as fixtures
 from tyremind.agents.investigation_loop import run_loop
 from tyremind.agents.prepare_outcome import prepare_outcome
+from tyremind.agents.save_outcome import save_outcome
+from tyremind.agents.validate_outcome import validate_outcome
 
 
 class InvestigationLoopTests(unittest.TestCase):
@@ -48,6 +50,8 @@ class InvestigationLoopTests(unittest.TestCase):
             self.assertEqual(outcome['maintenance_draft']['status'], 'DRAFT')
             self.assertEqual(prepare_outcome(self.database, self.root)['outcome'], outcome)
             model.assert_called_once()
+        validation = validate_outcome(self.database, self.root)
+        self.assertTrue(save_outcome(validation['investigation_id'], self.database)['has_work_order'])
 
     def test_validation_corrects_mismatched_sources_and_missing_checks(self):
         from tyremind.agents.validate_outcome import validate_outcome
@@ -63,6 +67,11 @@ class InvestigationLoopTests(unittest.TestCase):
         self.assertEqual(result['status'], 'PASSED')
         self.assertEqual(len(result['initial_issues']), 2)
         self.assertEqual(validate_outcome(self.database, self.root), result)
+        identity = result['investigation_id']
+        saved = save_outcome(identity, self.database)
+        self.assertEqual(saved['kind'], 'HUMAN_REVIEW')
+        self.assertFalse(saved['has_work_order'])
+        self.assertEqual(save_outcome(identity, self.database)['action'], 'RESUMED')
 
     def test_failed_correction_is_saved(self):
         from tyremind.agents.validate_outcome import validate_outcome
@@ -76,3 +85,6 @@ class InvestigationLoopTests(unittest.TestCase):
             self.assertEqual(result['status'], 'FAILED')
             self.assertEqual(validate_outcome(self.database, self.root), result)
             self.assertEqual(model.call_count, 2)
+        saved = save_outcome(result['investigation_id'], self.database)
+        self.assertEqual(saved['status'], 'VALIDATION_FAILED')
+        self.assertFalse(saved['has_work_order'])
