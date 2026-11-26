@@ -48,3 +48,31 @@ class InvestigationLoopTests(unittest.TestCase):
             self.assertEqual(outcome['maintenance_draft']['status'], 'DRAFT')
             self.assertEqual(prepare_outcome(self.database, self.root)['outcome'], outcome)
             model.assert_called_once()
+
+    def test_validation_corrects_mismatched_sources_and_missing_checks(self):
+        from tyremind.agents.validate_outcome import validate_outcome
+        from tyremind.monitoring.events import transaction
+
+        self.simulate(['MORE_EVIDENCE'] * 2, 'NEEDS_HUMAN_REVIEW')
+        prepare_outcome(self.database, self.root)
+        with transaction(self.database) as db:
+            db.execute("""UPDATE phase3_agent_states SET state_json=json_set(
+                json_remove(state_json,'$.draft_outcome.checks'),
+                '$.draft_outcome.retrieved_sources',json('[{}]'))""")
+        result = validate_outcome(self.database, self.root)
+        self.assertEqual(result['status'], 'PASSED')
+        self.assertEqual(len(result['initial_issues']), 2)
+        self.assertEqual(validate_outcome(self.database, self.root), result)
+
+    def test_failed_correction_is_saved(self):
+        from tyremind.agents.validate_outcome import validate_outcome
+
+        self.simulate(['ENOUGH_EVIDENCE'], 'READY_FOR_FINDINGS')
+        reply = json.dumps(dict(findings='safe to drive', uncertainty='Cause unknown',
+                                proposed_inspection='Inspect tyre'))
+        with patch('tyremind.agents.prepare_outcome.request_text', return_value=reply) as model:
+            prepare_outcome(self.database, self.root)
+            result = validate_outcome(self.database, self.root)
+            self.assertEqual(result['status'], 'FAILED')
+            self.assertEqual(validate_outcome(self.database, self.root), result)
+            self.assertEqual(model.call_count, 2)
